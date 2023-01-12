@@ -1,0 +1,3 @@
+type: project
+config:
+  project_type: cfn-ecr-soci
