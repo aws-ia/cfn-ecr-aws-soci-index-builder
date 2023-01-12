@@ -33,7 +33,6 @@ Resources:
           - Effect: Allow
             Action:
             - cloudformation:DescribeStacks
-            - *
             Resource: "*"
   GenID:
     Type: AWS::Lambda::Function
