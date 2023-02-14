@@ -1,0 +1,231 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'TODO: add description and replace QSID (qs-000000000)'
+
+Parameters:
+  SociRepositoryImageTagFilters:
+    Description: >
+      Comma seperated list of SOCI repository image tag filters (e.g. prod*:latest,repo-name:*). This filter determines
+      which repositories and image tags will produce SOCI indexes.
+    Type: CommaDelimitedList
+    Default: ''
+    AllowedPattern: '(^$|(?:[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*\/)*[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*(:?[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*)*)'
+  QSS3BucketName: 
+    Description:
+      S3 bucket name for the Quick Start assets. This string can include
+      numbers, lowercase letters, and hyphens (-). It cannot start
+      or end with a hyphen (-).
+    AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
+    ConstraintDescription:
+      Quick Start bucket name can include numbers, lowercase
+      letters, and hyphens (-). It cannot start or end with a hyphen (-).
+    Default: aws-quickstart
+    Type: String
+  QSS3KeyPrefix:
+    Description:
+      S3 key prefix for the Quick Start assets. Quick Start key prefix
+      can include numbers, lowercase letters, uppercase letters, hyphens (-), and
+      forward slash (/).
+    AllowedPattern: ^[0-9a-zA-Z-/]*$
+    ConstraintDescription:
+      Quick Start key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), and forward slash (/).
+    Default: cfn-ecr-aws-soci-index-builder/
+    Type: String
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: SOCI Index Builder Configuration
+        Parameters:
+          - SociRepositoryImageTagFilters
+      - Label:
+          default: Deployment Configuration
+        Parameters:
+          - QSS3BucketName
+          - QSS3KeyPrefix
+
+    ParameterLabels:
+      SociRepositoryImageTagFilters:
+        default: SOCI Repository Image Tag Filters
+      QSS3BucketName:
+        default: S3 bucket name for the Quick Start assets
+      QSS3KeyPrefix:
+        default: S3 key prefix for the Quick Start assets
+        
+Conditions:
+  UsingDefaultBucket: 
+    !Equals [!Ref QSS3BucketName, "aws-quickstart"]
+
+
+Resources:
+  ECRImageActionEventFilteringLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: >
+        Given an Amazon ECR Image Action event from Amazon EventBridge, matches the event's detail.repository-name 
+        and detail.image-tag against one or more known patterns, and invokes the Executor Lambda with the same event on a match.
+      Handler: ecr_image_action_event_filtering_lambda_function.lambda_handler
+      Runtime: python3.9
+      Role: !GetAtt ECRImageActionEventFilteringLambdaRole.Arn
+      Timeout: 300
+      Code:
+        S3Bucket:
+          !If [
+            UsingDefaultBucket,
+            !Sub "${QSS3BucketName}-${AWS::Region}",
+            !Ref QSS3BucketName,
+          ]
+        S3Key: !Sub "${QSS3KeyPrefix}functions/packages/ecr-image-action-event-filtering/lambda.zip"
+      Environment:
+        Variables:
+          soci_repository_image_tag_filters:
+            !Join [ ",", !Ref SociRepositoryImageTagFilters ]
+          soci_index_generator_lambda_arn:
+            !GetAtt SociIndexGeneratorLambda.Arn
+
+  ECRImageActionEventFilteringLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "sts:AssumeRole"
+            Principal:
+              Service: "lambda.amazonaws.com"
+
+  ECRImageActionEventFilteringLambdaCloudwatchPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ECRImageActionEventFilteringLambdaCloudwatchPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "logs:CreateLogGroup"
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+            Resource:
+              - !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-ECRImageActionEventFilteringLambda-*:*
+      Roles:
+        - Ref: "ECRImageActionEventFilteringLambdaRole"
+
+  ECRImageActionEventFilteringLambdaInvokeSociIndexGeneratorLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ECRImageActionEventFilteringLambdaInvokeSociIndexGeneratorLambdaPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "lambda:InvokeFunction"
+              - "lambda:InvokeAsync"
+            Resource:
+              - !GetAtt SociIndexGeneratorLambda.Arn
+      Roles:
+        - Ref: "ECRImageActionEventFilteringLambdaRole"
+
+  ECRImageActionEventBridgeRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "TODO"
+      EventPattern:
+        source: ["aws.ecr"]
+        detail-type: ["ECR Image Action"]
+        detail:
+          action-type: [ "PUSH" ]
+          result: [ "SUCCESS" ]
+        region:
+          - !Sub ${AWS::Region}
+      Name: "ECRImageActionEventBridgeRule"
+      State: "ENABLED"
+      Targets:
+        - Id: "ecr-image-action-lambda-target"
+          Arn: !GetAtt ECRImageActionEventFilteringLambda.Arn
+
+  ECRImageActionEventFilteringLambdaInvokePermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref ECRImageActionEventFilteringLambda
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt ECRImageActionEventBridgeRule.Arn
+
+  SociIndexGeneratorLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: >
+        Given an ECR container repository and image, this Lambda generate the image's SOCI artifacts and pushes them to the repository.
+      Handler: main
+      Runtime: go1.x
+      Role: !GetAtt SociIndexGeneratorLambdaRole.Arn
+      Timeout: 300
+      Code:
+        S3Bucket:
+          !If [
+            UsingDefaultBucket,
+            !Sub "${QSS3BucketName}-${AWS::Region}",
+            !Ref QSS3BucketName,
+          ]
+        S3Key: !Sub "${QSS3KeyPrefix}functions/packages/soci-index-generator-lambda/soci_index_generator_lambda.zip"
+      EphemeralStorage:
+        Size: 10240  # 10GB - default is 512MB
+      MemorySize: 256
+
+  SociIndexGeneratorLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "sts:AssumeRole"
+            Principal:
+              Service: "lambda.amazonaws.com"
+      Policies:
+        -  PolicyName: "AllowEcrGetAuthorizationToken"
+           PolicyDocument:
+             Version: "2012-10-17"
+             Statement:
+               - Effect: "Allow"
+                 Action: [
+                   "ecr:GetAuthorizationToken"
+                 ]
+                 Resource: "*"
+        -  PolicyName: "AllowEcrPushAndPull"
+           PolicyDocument:
+             Version: "2012-10-17"
+             Statement:
+               - Effect: "Allow"
+                 Action:
+                   - "ecr:BatchGetImage"
+                   - "ecr:GetDownloadUrlForLayer"
+                   - "ecr:CompleteLayerUpload"
+                   - "ecr:UploadLayerPart"
+                   - "ecr:InitiateLayerUpload"
+                   - "ecr:BatchCheckLayerAvailability"
+                   - "ecr:PutImage"
+                 Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/*
+        -  PolicyName: "AllowLogging"
+           PolicyDocument:
+             Version: "2012-10-17"
+             Statement:
+               - Effect: Allow
+                 Action:
+                   - "logs:CreateLogGroup"
+                   - "logs:CreateLogStream"
+                   - "logs:PutLogEvents"
+                 Resource:
+                   - !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-SociIndexGeneratorLambda-*:*
+
+Outputs:
+  ExportsStackName:
+    Value: !Ref 'AWS::StackName'
+    Export:
+      Name: !Sub 'ExportsStackName-${AWS::StackName}'
