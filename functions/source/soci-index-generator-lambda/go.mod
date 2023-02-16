@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-lambda-go v1.36.1
 	github.com/aws/aws-sdk-go v1.44.175
 	github.com/awslabs/soci-snapshotter v0.0.0-20230209203217-a8fadc6bb50d
-	github.com/containerd/containerd v1.6.16
+	github.com/containerd/containerd v1.6.18
 	github.com/opencontainers/image-spec v1.1.0-rc2
 	oras.land/oras-go/v2 v2.0.0
 )
