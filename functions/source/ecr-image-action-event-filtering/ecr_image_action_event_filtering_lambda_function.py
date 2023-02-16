@@ -64,7 +64,8 @@ def lambda_handler(event, context):
 
             response = lambda_client.invoke(
                 FunctionName = soci_index_generator_lambda_arn,
-                InvocationType = 'Event'
+                InvocationType = 'Event',
+                Payload = json.dumps(event)
             )
 
             lambda_status_code = response['ResponseMetadata']['HTTPStatusCode']

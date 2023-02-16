@@ -1,9 +1,10 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-FROM golang:1.19-alpine
+FROM golang:1.19
 
-RUN apk --no-cache add py3-pip make git zip gcc g++ zlib zlib-dev 
+RUN apt-get -y update
+RUN apt-get -y install python3-pip make git zip gcc g++ zlib1g zlib1g-dev
 
 COPY . /build
 
