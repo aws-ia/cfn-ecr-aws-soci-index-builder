@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'TODO: add description and replace QSID (qs-000000000)'
+Description: 'This AWS solution automates the generation of Seekable OCI (SOCI) index artifacts and storing them in ECR. It provides an easy way for customers to try out SOCI technology to lazily load container images. CFN AWS SOCI Index Builder will asynchronously generate SOCI index artifacts triggered by image pushes to designated ECR repositories and store them in the repository alongside the images they reference. (qs-1tsurulid)'
 
 Parameters:
   SociRepositoryImageTagFilters:
@@ -71,7 +71,7 @@ Resources:
       Handler: ecr_image_action_event_filtering_lambda_function.lambda_handler
       Runtime: python3.9
       Role: !GetAtt ECRImageActionEventFilteringLambdaRole.Arn
-      Timeout: 300
+      Timeout: 900
       Code:
         S3Bucket:
           !If [
@@ -111,7 +111,9 @@ Resources:
               - "logs:CreateLogStream"
               - "logs:PutLogEvents"
             Resource:
-              - !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-ECRImageActionEventFilteringLambda-*:*
+              !Sub
+                - "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${ImageActionEventFilteringLambdaId}:*"
+                - ImageActionEventFilteringLambdaId: !Ref ECRImageActionEventFilteringLambda
       Roles:
         - Ref: "ECRImageActionEventFilteringLambdaRole"
 
@@ -134,7 +136,7 @@ Resources:
   ECRImageActionEventBridgeRule:
     Type: AWS::Events::Rule
     Properties:
-      Description: "TODO"
+      Description: "Invokes the ECR Image Action Event Filtering Lambda function when an image is successfully pushed to ECR."
       EventPattern:
         source: ["aws.ecr"]
         detail-type: ["ECR Image Action"]
@@ -161,11 +163,11 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Description: >
-        Given an ECR container repository and image, this Lambda generate the image's SOCI artifacts and pushes them to the repository.
+        Given an ECR container repository and image, this Lambda generates the image's SOCI artifacts and pushes them to the repository.
       Handler: main
       Runtime: go1.x
       Role: !GetAtt SociIndexGeneratorLambdaRole.Arn
-      Timeout: 300
+      Timeout: 900
       Code:
         S3Bucket:
           !If [
@@ -177,6 +179,25 @@ Resources:
       EphemeralStorage:
         Size: 10240  # 10GB - default is 512MB
       MemorySize: 256
+
+  SociIndexGeneratorLambdaCloudwatchPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: SociIndexGeneratorLambdaCloudwatchPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "logs:CreateLogGroup"
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+            Resource:
+              - !Sub
+                  - "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${SociIndexGeneratorLambdaId}:*"
+                  - SociIndexGeneratorLambdaId: !Ref SociIndexGeneratorLambda
+      Roles:
+        - Ref: "SociIndexGeneratorLambdaRole"
 
   SociIndexGeneratorLambdaRole:
     Type: AWS::IAM::Role
@@ -212,17 +233,6 @@ Resources:
                    - "ecr:BatchCheckLayerAvailability"
                    - "ecr:PutImage"
                  Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/*
-        -  PolicyName: "AllowLogging"
-           PolicyDocument:
-             Version: "2012-10-17"
-             Statement:
-               - Effect: Allow
-                 Action:
-                   - "logs:CreateLogGroup"
-                   - "logs:CreateLogStream"
-                   - "logs:PutLogEvents"
-                 Resource:
-                   - !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-SociIndexGeneratorLambda-*:*
 
 Outputs:
   ExportsStackName:
