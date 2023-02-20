@@ -167,7 +167,7 @@ func (ecrSoci *EcrSoci) BuildIndex(ctx context.Context, image images.Image) (*oc
 		return nil, err
 	}
 
-	builder, err := soci.NewIndexBuilder(ecrSoci.containerdStore, &ecrSoci.ociStore, artifactDb, soci.WithMinLayerSize(0), soci.WithPlatform(platform))
+	builder, err := soci.NewIndexBuilder(ecrSoci.containerdStore, &ecrSoci.ociStore, artifactDb, soci.WithMinLayerSize(0), soci.WithPlatform(platform), soci.WithLegacyRegistrySupport)
 	if err != nil {
 		return nil, err
 	}
