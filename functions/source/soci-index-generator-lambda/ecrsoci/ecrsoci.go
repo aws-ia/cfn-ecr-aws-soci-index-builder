@@ -137,6 +137,7 @@ func authorizeEcr(ecrRegistry *remote.Registry) error {
 	ecrRegistry.RepositoryOptions.Client = &auth.Client{
 		Header: http.Header{
 			"Authorization": {"Basic " + *ecrAuthorizationToken},
+			"User-Agent":    {"SOCI Index Builder (oras-go)"},
 		},
 	}
 	return nil
