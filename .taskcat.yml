@@ -1,6 +1,3 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# // SPDX-License-Identifier: Apache-2.0
-
 project:
   name: cfn-ecr-aws-soci-index-builder
   owner: quickstart@amazon.com

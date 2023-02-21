@@ -1,6 +1,3 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
-
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'This AWS solution automates the generation of Seekable OCI (SOCI) index artifacts and storing them in ECR. It provides an easy way for customers to try out SOCI technology to lazily load container images. CFN AWS SOCI Index Builder will asynchronously generate SOCI index artifacts triggered by image pushes to designated ECR repositories and store them in the repository alongside the images they reference. (qs-1tsurulid)'
 
