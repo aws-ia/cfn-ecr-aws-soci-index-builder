@@ -39,7 +39,7 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 		Target: *desc,
 	}
 
-	fmt.Printf("Building SOCI index for the image [repo=%s, tag=%s]", repo, tag)
+	fmt.Printf("Building SOCI index for the image [repo=%s, tag=%s]\n", repo, tag)
 	indexDescriptor, err := ecrSoci.BuildIndex(ctx, image)
 	if err != nil {
 		return "", err
