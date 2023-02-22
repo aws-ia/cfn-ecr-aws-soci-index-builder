@@ -11,24 +11,26 @@ Parameters:
     AllowedPattern: '(^$|(?:[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*\/)*[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*(:?[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*)*)'
   QSS3BucketName: 
     Description:
-      S3 bucket name for the Quick Start assets. This string can include
-      numbers, lowercase letters, and hyphens (-). It cannot start
-      or end with a hyphen (-).
+      Name of the S3 bucket for your copy of the deployment assets.
+      Keep the default name unless you are customizing the template.
+      Changing the name updates code references to point to a new location.
     AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
     ConstraintDescription:
-      Quick Start bucket name can include numbers, lowercase
-      letters, and hyphens (-). It cannot start or end with a hyphen (-).
+      The S3 bucket name can include numbers, lowercase letters,
+      and hyphens (-), but it cannot start or end with a hyphen.
     Default: aws-quickstart
     Type: String
   QSS3KeyPrefix:
     Description:
-      S3 key prefix for the Quick Start assets. Quick Start key prefix
-      can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-      forward slash (/).
+      S3 key prefix that is used to simulate a folder for your copy of the deployment assets.
+      Keep the default prefix unless you are customizing the template.
+      Changing the prefix updates code references to point to a new location.
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription:
-      Quick Start key prefix can include numbers, lowercase letters,
-      uppercase letters, hyphens (-), and forward slash (/).
+      The S3 key prefix can include numbers, lowercase letters, uppercase letters,
+      hyphens (-), underscores (_), periods (.), asterisks (*), single quotes ('),
+      open parenthesis ((), close parenthesis ()), and forward slashes (/). End the
+      prefix with a forward slash.
     Default: cfn-ecr-aws-soci-index-builder/
     Type: String
 
@@ -40,7 +42,7 @@ Metadata:
         Parameters:
           - SociRepositoryImageTagFilters
       - Label:
-          default: Deployment Configuration
+          default: AWS Partner Solution Configuration
         Parameters:
           - QSS3BucketName
           - QSS3KeyPrefix
@@ -49,9 +51,9 @@ Metadata:
       SociRepositoryImageTagFilters:
         default: SOCI Repository Image Tag Filters
       QSS3BucketName:
-        default: S3 bucket name for the Quick Start assets
+        default: Partner Solution S3 bucket name
       QSS3KeyPrefix:
-        default: S3 key prefix for the Quick Start assets
+        default: Partner Solution S3 key prefix
         
 Conditions:
   UsingDefaultBucket: 
