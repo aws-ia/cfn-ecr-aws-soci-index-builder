@@ -144,13 +144,14 @@ func authorizeEcr(ecrRegistry *remote.Registry) error {
 }
 
 // Pull an image from the remote registry
-func (ecrSoci *EcrSoci) Pull(ctx context.Context, repositoryName string, imageTag string) (*ocispec.Descriptor, error) {
+// imageReference can be either a digest or a tag
+func (ecrSoci *EcrSoci) Pull(ctx context.Context, repositoryName string, imageReference string) (*ocispec.Descriptor, error) {
 	repo, err := ecrSoci.registry.Repository(ctx, repositoryName)
 	if err != nil {
 		return nil, err
 	}
 
-	imageDescriptor, err := oras.Copy(ctx, repo, imageTag, &ecrSoci.ociStore, imageTag, oras.DefaultCopyOptions)
+	imageDescriptor, err := oras.Copy(ctx, repo, imageReference, &ecrSoci.ociStore, imageReference, oras.DefaultCopyOptions)
 	if err != nil {
 		return nil, err
 	}
