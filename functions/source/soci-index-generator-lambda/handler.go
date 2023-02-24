@@ -9,15 +9,20 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/awslabs/soci-index-generator-lambda/ecrsoci"
 	"github.com/awslabs/soci-index-generator-lambda/events"
 	"github.com/containerd/containerd/images"
+	"github.com/rs/zerolog/log"
 )
 
 func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (string, error) {
+	lambdaContext, _ := lambdacontext.FromContext(ctx)
 	actionType := event.Detail.ActionType
 	if actionType != "PUSH" {
-		return "", fmt.Errorf("The event's 'detail.action-type' must be 'PUSH'.")
+		err := fmt.Errorf("The event's 'detail.action-type' must be 'PUSH'.")
+		log.Error().Err(err).Str("RequestId", lambdaContext.AwsRequestID).Msg("ECR event validation error")
+		return "ECR event validation error", err
 	}
 	registryUrl := buildEcrRegistryUrl(event)
 	repo := event.Detail.RepositoryName
@@ -25,13 +30,15 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 
 	ecrSoci, err := ecrsoci.Init(ctx, registryUrl)
 	if err != nil {
-		return "", err
+		log.Error().Err(err).Str("RequestId", lambdaContext.AwsRequestID).Msg("EcrSoci initialization error")
+		return "EcrSoci initialization error", err
 	}
 
-	fmt.Printf("Pulling image [repo=%s, digest=%s]\n", repo, digest)
+	log.Info().Str("RequestId", lambdaContext.AwsRequestID).Str("Repository", repo).Str("ImageDigest", digest).Msg("Pulling image")
 	desc, err := ecrSoci.Pull(ctx, repo, digest)
 	if err != nil {
-		return "", err
+		log.Error().Err(err).Str("RequestId", lambdaContext.AwsRequestID).Msg("Pulling image error")
+		return "Pulling image error", err
 	}
 
 	image := images.Image{
@@ -39,19 +46,22 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 		Target: *desc,
 	}
 
-	fmt.Printf("Building SOCI index for the image [repo=%s, digest=%s]\n", repo, digest)
+	log.Info().Str("RequestId", lambdaContext.AwsRequestID).Str("Repository", repo).Str("ImageDigest", digest).Msg("Building SOCI index ")
 	indexDescriptor, err := ecrSoci.BuildIndex(ctx, image)
 	if err != nil {
-		return "", err
+		log.Error().Err(err).Str("RequestId", lambdaContext.AwsRequestID).Msg("Building SOCI index error")
+		return "Building SOCI index error", err
 	}
 
-	fmt.Printf("Pushing the SOCI index to the repo [repo=%s]\n", repo)
+	log.Info().Str("RequestId", lambdaContext.AwsRequestID).Str("Repository", repo).Msg("Pushing SOCI index ")
 	err = ecrSoci.PushIndex(ctx, *indexDescriptor, repo)
 	if err != nil {
-		return "", err
+		log.Error().Err(err).Str("RequestId", lambdaContext.AwsRequestID).Msg("Pushing SOCI index error")
+		return "Pushing SOCI index error", err
 	}
 
-	return "Successfully pushed SOCI index for " + registryUrl + "/" + repo + "@" + digest, nil
+	log.Info().Str("RequestId", lambdaContext.AwsRequestID).Str("Repository", repo).Str("ImageDigest", digest).Msg("Successfully built and pushed SOCI index")
+	return "Successfully built and pushed SOCI index", nil
 }
 
 // Returns ecr registry url from an image action event
