@@ -29,7 +29,6 @@ project:
   - me-south-1
   - eu-south-1
   - af-south-1
-  - ap-southeast-3
   - us-gov-west-1
   - us-gov-east-1
 tests:
@@ -58,7 +57,6 @@ tests:
       - me-south-1
       - eu-south-1
       - af-south-1
-      - ap-southeast-3
       - us-gov-west-1
       - us-gov-east-1
     template: templates/SociIndexBuilder.yml
