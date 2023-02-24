@@ -4,8 +4,15 @@ Description: 'This AWS solution automates the generation of Seekable OCI (SOCI) 
 Parameters:
   SociRepositoryImageTagFilters:
     Description: >
-      Comma seperated list of SOCI repository image tag filters (e.g. prod*:latest,repo-name:*). This filter determines
-      which repositories and image tags will produce SOCI indexes.
+      Comma separated list of SOCI repository image tag filters. Each filter is a
+      repository name followed by a colon, “:”, followed by a tag. Both repository
+      names and tags may contain wildcards denoted by an asterisk, “*”. For example,
+      “prod*:latest” matches all images tagged with “latest” that are pushed to any
+      repositories that start with “prod”, while “dev:*” matches all images pushed
+      to the “dev” repository. Use “*:*” to match all images pushed to all
+      repositories in your private registry. This stack will build a SOCI index for
+      any images that are pushed to your private registry after this stack is
+      created that match at least one filter.
     Type: CommaDelimitedList
     Default: ''
     AllowedPattern: '(^$|(?:[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*\/)*[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*(:?[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*)*)'
