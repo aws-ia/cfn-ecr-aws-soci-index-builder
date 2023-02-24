@@ -177,7 +177,7 @@ Resources:
         S3Key: !Sub "${QSS3KeyPrefix}functions/packages/soci-index-generator-lambda/soci_index_generator_lambda.zip"
       EphemeralStorage:
         Size: 10240  # 10GB - default is 512MB
-      MemorySize: 256
+      MemorySize: 1024
 
   SociIndexGeneratorLambdaCloudwatchPolicy:
     Type: AWS::IAM::Policy
