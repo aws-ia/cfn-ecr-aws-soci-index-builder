@@ -1,3 +1,104 @@
 //Include any predeployment steps here, such as signing up for a Marketplace AMI or making any changes to a partner account. If there are no predeployment steps, leave this file empty.
 
 == Predeployment steps
+
+1. Create ECR repository to store container images and generated SOCI Artifacts
+2. Sign in to the CloudFormation console or call the CloudFormation CreateStack API with credentials that have permissions to create, update, rollback, or delete a stack (https://docs.amazonaws.cn/en_us/AWSCloudFormation/latest/UserGuide/using-iam-template.html[documentation reference]). This IAM role or user must also have permissions to perform at least the following actions so that CloudFormation can create, modify, and delete the resources in the stack:
+
+Eventbridge Permissions
+[source, json]
+----
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "events:DescribeRule",
+                "events:PutRule",
+                "events:PutTargets",
+                "events:DeleteRule",
+                "events:RemoveTargets"
+            ],
+            "Resource": "arn:aws:events:<Region>:<AccountId>:rule/ECRImageActionEventBridgeRule",
+        }
+    ]
+}
+----
+
+S3 Permissions (to fetch Lambda code)
+[source, json]
+----
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::aws-quickstart-<Region>/*soci_index_generator_lambda.zip",
+                "arn:aws:s3:::aws-quickstart-<Region>/*ecr_image_action_event_filtering_lambda_function.zip"
+            ]
+        }
+    ]
+}
+----
+
+Lambda Permissions
+[source, json]
+----
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "lambda:GetFunction",
+                "lambda:CreateFunction",
+                "lambda:UpdateFunctionConfiguration",
+                "lambda:AddPermission",
+                "lambda:DeleteFunction",
+                "lambda:RemovePermission"
+            ],
+            "Resource": [
+                "arn:aws:lambda:<Region>:<AccountId>:function:*-ECRImageActionEventFilteringLambda-*",
+                "arn:aws:lambda:<Region>:<AccountId>:function:*-SociIndexGeneratorLambda-*"
+            ]
+        }
+    ]
+}
+----
+
+IAM Permissions
+[source, json]
+----
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetRole",
+                "iam:GetRolePolicy",
+                "iam:CreateRole",
+                "iam:PutRolePolicy",
+                "iam:PassRole",
+                "iam:DeleteRole",
+                "iam:DeleteRolePolicy"
+            ],
+            "Resource": [
+                "arn:aws:iam::<AccountId>:role/*-ECRImageActionEventFilteringLambdaRole*",
+                "arn:aws:iam::<AccountId>:role/*-SociIndexGeneratorLambdaRole*"
+            ]
+        }
+    ]
+}
+----
+
+** Note that <AccountId> should be replaced by the AWS Account Id of the account you’re deploying to and <Region> should be replaced by the region you’re deploying to (e.g. us-east-1).
+
+** Note that the role name ECRImageActionEventFilteringLambdaRole specified in the resource section of the IAM permissions above will be truncated if the name of your stack is greater than 12 characters.
+
+** Note that the role name SociIndexGeneratorLambdaRole specified in the resource section of the IAM permissions above will be truncated if the name of your stack is greater than 22 characters.

@@ -1,3 +1,9 @@
 // Include any postdeployment steps here, such as steps necessary to test that the deployment was successful. If there are no postdeployment steps, leave this file empty.
 
-== Postdeployment steps
+// == Postdeployment steps
+
+== Tear Down
+
+1. To remove this solution, delete the Cloudformation Stack created in the “Deployment steps” section.
+2. In the CloudWatch Logs console or using the https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DeleteLogGroup.html[DeleteLogGroup] API, delete CloudWatch Logs log groups “`/aws/lambda/<StackName>-SociIndexGeneratorLambda`” and “`/aws/lambda/<StackName>-ECRImageActionEventFilteringLambda`” where `<StackName>` is the name of the stack that you entered in the “Deployment steps” section.
+3. In the ECR Console or using the https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_BatchDeleteImage.html[BatchDeleteImage] API, delete the SOCI Index artifacts uploaded to ECR.
