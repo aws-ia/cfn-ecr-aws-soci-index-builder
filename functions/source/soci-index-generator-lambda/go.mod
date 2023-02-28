@@ -8,6 +8,7 @@ require (
 	github.com/awslabs/soci-snapshotter v0.0.0-20230209203217-a8fadc6bb50d
 	github.com/containerd/containerd v1.6.18
 	github.com/opencontainers/image-spec v1.1.0-rc2
+	github.com/rs/zerolog v1.29.0
 	oras.land/oras-go/v2 v2.0.0
 )
 
@@ -18,6 +19,8 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/rs/xid v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
