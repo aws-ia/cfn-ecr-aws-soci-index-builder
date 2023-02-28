@@ -7,22 +7,16 @@ AWS Cloud.
 
 [#architecture1]
 .Partner Solution architecture for {partner-product-short-name} on AWS
-image::../docs/deployment_guide/images/architecture_diagram.png[Architecture]
+image::../docs/deployment_guide/images/aws_cfn_soci_index_builder_architecture_diagram.png[Architecture]
 
 As shown in <<architecture1>>, this Partner Solution sets up the following:
 
-* A highly available architecture that spans two Availability Zones.*
-* A virtual private cloud (VPC) configured with public and private subnets, according to AWS
-best practices, to provide you with your own virtual network on AWS.*
-* In the public subnets:
-** Managed network address translation (NAT) gateways to allow outbound
-internet access for resources in the private subnets.*
-** A Linux bastion host in an Auto Scaling group to allow inbound Secure
-Shell (SSH) access to Amazon Elastic Compute Cloud (Amazon EC2) instances in public and private subnets.*
-* In the private subnets:
-** <item>.
-** <item>.
-// Add bullet points for any additional components that are included in the deployment. Ensure that the additional components are shown in the architecture diagram. End each bullet with a period.
-* <describe any additional components>.
-
-[.small]#* The template that deploys this Partner Solution into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
+* A CloudFormation stack that contains the following resources:
+** An EventBridge Rule that detects ECR Image Action events for successful image pushes.
+** A Lambda function for filtering ECR Image Action events that match the filters provided in the CloudFormation stack parameters.
+** A Lambda function for generating SOCI indices for matched images and pushing those indices back to images' repositories in Amazon Elastic Container Registry (ECR).
+** AWS Identity and Access Management (IAM) to provide the following:
+*** Permission for Amazon EventBridge to invoke the Filtering Lambda function.
+*** Permission for the Filtering Lambda function to create CloudWatch Logs and to invoke the SOCI Index Generator Lambda function.
+*** Permission for the SOCI Index Generator Lambda function to create CloudWatch Logs and access ECR.
+* Amazon CloudWatch for logs from both Lambda functions that you can use to troubleshoot.

@@ -1,5 +1,1 @@
-This guide covers the information you need to deploy the {partner-product-name} Partner Solution in the AWS Cloud.
-
-// For advanced information about the product, troubleshooting, or additional functionality, refer to the https://{partner-solution-github-org}.github.io/{partner-solution-project-name}/operational/index.html[Operational Guide^].
-
-// For information about using this Partner Solution for migrations, refer to the https://{partner-solution-github-org}.github.io/{partner-solution-project-name}/migration/index.html[Migration Guide^].
+This AWS solution automates the generation of https://aws.amazon.com/about-aws/whats-new/2022/09/introducing-seekable-oci-lazy-loading-container-images/[Seekable OCI (SOCI)] index artifacts and storing them in ECR. It provides an easy way for customers to try out SOCI technology to lazily load container images. CFN AWS SOCI Index Builder will asynchronously generate SOCI index artifacts triggered by image pushes to designated ECR repositories and store them in the repository alongside the images they reference.
