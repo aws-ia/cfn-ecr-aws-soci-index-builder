@@ -29,7 +29,7 @@ import (
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/platforms"
 
-	"github.com/awslabs/soci-index-generator-lambda/utils/log"
+	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/log"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )

@@ -12,10 +12,10 @@ import (
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	"github.com/awslabs/soci-index-generator-lambda/ecrsoci"
-	"github.com/awslabs/soci-index-generator-lambda/events"
-	"github.com/awslabs/soci-index-generator-lambda/utils/fs"
-	"github.com/awslabs/soci-index-generator-lambda/utils/log"
+	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/ecrsoci"
+	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/events"
+	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/fs"
+	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/log"
 	"github.com/containerd/containerd/images"
 )
 
