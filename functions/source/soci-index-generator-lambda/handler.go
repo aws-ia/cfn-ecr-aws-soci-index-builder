@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/ecrsoci"
 	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/events"
 	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/fs"
 	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/log"
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/containerd/containerd/images"
 )
 
@@ -132,8 +132,6 @@ func setDeadline(ctx context.Context, quitChannel chan int, dataDir string) {
 				return
 			case <-quitChannel:
 				return
-			default:
-				time.Sleep(1 * time.Second)
 			}
 		}
 	}()
