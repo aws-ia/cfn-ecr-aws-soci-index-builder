@@ -2,10 +2,10 @@
 
 == Predeployment steps
 
-1. Create ECR repository to store container images and generated SOCI Artifacts
-2. Sign in to the CloudFormation console or call the CloudFormation CreateStack API with credentials that have permissions to create, update, rollback, or delete a stack (https://docs.amazonaws.cn/en_us/AWSCloudFormation/latest/UserGuide/using-iam-template.html[documentation reference]). This IAM role or user must also have permissions to perform at least the following actions so that CloudFormation can create, modify, and delete the resources in the stack:
+1. Create Amazon ECR repository to store container images and generated SOCI artifacts.
+2. Sign in to the CloudFormation console or call the CloudFormation CreateStack API with credentials that have permissions to create, update, rollback, or delete a stack. For more information, refer to (https://docs.amazonaws.cn/en_us/AWSCloudFormation/latest/UserGuide/using-iam-template.html[Controlling access with Amazon Identity and Access Management^]). This IAM role or user must also have permissions to perform at least the following actions so CloudFormation can create, modify, and delete the resources in the stack:
 
-Eventbridge Permissions
+** Eventbridge permissions
 [source, json]
 ----
 {
@@ -26,7 +26,7 @@ Eventbridge Permissions
 }
 ----
 
-S3 Permissions (to fetch Lambda code)
+** S3 permissions (to fetch Lambda code)
 [source, json]
 ----
 {
@@ -46,7 +46,7 @@ S3 Permissions (to fetch Lambda code)
 }
 ----
 
-Lambda Permissions
+** Lambda permissions
 [source, json]
 ----
 {
@@ -71,7 +71,7 @@ Lambda Permissions
 }
 ----
 
-IAM Permissions
+** IAM permissions
 [source, json]
 ----
 {
@@ -97,8 +97,9 @@ IAM Permissions
 }
 ----
 
-** Note that <AccountId> should be replaced by the AWS Account Id of the account you’re deploying to and <Region> should be replaced by the region you’re deploying to (e.g. us-east-1).
+Notes:
+* <AccountId> should be replaced by the AWS Account ID of the account you’re deploying to and <Region> should be replaced by the region you’re deploying to (example: us-east-1).
 
-** Note that the role name ECRImageActionEventFilteringLambdaRole specified in the resource section of the IAM permissions above will be truncated if the name of your stack is greater than 12 characters.
+*The role name _ECRImageActionEventFilteringLambdaRole_, specified in the resource section of the IAM permissions above, will be truncated if the name of your stack is greater than 12 characters.
 
-** Note that the role name SociIndexGeneratorLambdaRole specified in the resource section of the IAM permissions above will be truncated if the name of your stack is greater than 22 characters.
+* The role name _SociIndexGeneratorLambdaRole_, specified in the resource section of the IAM permissions above, will be truncated if the name of your stack is greater than 22 characters.
