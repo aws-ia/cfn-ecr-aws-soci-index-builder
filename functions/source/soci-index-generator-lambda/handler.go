@@ -15,6 +15,7 @@ import (
 	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/events"
 	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/fs"
 	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/log"
+	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/registry"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/containerd/containerd/images"
@@ -30,6 +31,11 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 	digest := event.Detail.ImageDigest
 	registryUrl := buildEcrRegistryUrl(event)
 	ctx = context.WithValue(ctx, "RegistryURL", registryUrl)
+
+	registry, err := registry.Init(registryUrl)
+	if err != nil {
+		return lambdaError(ctx, "Remote registry initialization error", err)
+	}
 
 	// Directory in lambda storage to store images and SOCI artifacts
 	dataDir, err := createTempDir(ctx)
@@ -51,7 +57,7 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 		return lambdaError(ctx, "Registry client or local storage initialization error", err)
 	}
 
-	desc, err := ecrSoci.Pull(ctx, repo, digest)
+	desc, err := registry.Pull(ctx, repo, ecrSoci.OciStore, digest)
 	if err != nil {
 		return lambdaError(ctx, "Image pull error", err)
 	}
@@ -67,7 +73,7 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 	}
 	ctx = context.WithValue(ctx, "SOCIIndexDigest", indexDescriptor.Digest.String())
 
-	err = ecrSoci.PushIndex(ctx, *indexDescriptor, repo)
+	err = registry.Push(ctx, ecrSoci.OciStore, *indexDescriptor, repo)
 	if err != nil {
 		return lambdaError(ctx, "SOCI index push error", err)
 	}
