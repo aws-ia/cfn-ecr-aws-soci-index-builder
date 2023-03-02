@@ -1,18 +1,18 @@
 // Add any unique troubleshooting steps here.
 For troubleshooting common AWS Partner Solution issues, refer to the https://fwd.aws/rA69w?[AWS Quick Start General Information Guide] and https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/troubleshooting.html[Troubleshooting CloudFormation].
 
-Lambda logs for generating SOCI Index artifacts can be found in the CloudWatch log group “`/aws/lambda/<StackName>-SociIndexGeneratorLambda`” and Lambda logs for repository image tag filtering and matches can be found in Cloudwatch Log Group “`/aws/lambda/<StackName>-ECRImageActionEventFilteringLambda`” where `<StackName>` is the name of the stack that you entered in the “Deployment steps” section.
+Lambda logs for generating SOCI Index artifacts can be found in the CloudWatch log group `/aws/lambda/<StackName>-SociIndexGeneratorLambda`. Lambda logs for repository image tag filtering and matches can be found in the Cloudwatch log group `/aws/lambda/<StackName>-ECRImageActionEventFilteringLambda` where `<StackName>` is the name of the stack that you entered in the *Deployment steps* section above.
 
-If Lambda logs for generating SOCI Index Artifacts show that the Lambda function is timing out (e.g., you notice “Task timed out” in the log entry), this is likely caused by the size of image. SOCI Index Builder supports a maximum compressed image size of 6GB, because larger sizes may result in the SOCI Index Builder Lambda timing out after 15 minutes.
+If Lambda logs for generating SOCI Index artifacts show that the Lambda function is timing out (example: You notice _Task timed out_ in the log entry), this is likely caused by the size of the image. SOCI Index Builder supports a maximum compressed image size of 6GB because larger sizes may result in the SOCI Index Builder Lambda timing out after 15 minutes.
 
 == Resources
 
 AWS Services:
 
-* https://aws.amazon.com/cloudformation/[AWS Cloudformation]
-* https://aws.amazon.com/eventbridge/[AWS EventBridge]
-* https://aws.amazon.com/lambda/[AWS Lambda]
-* https://aws.amazon.com/s3/[AWS S3]
-* https://aws.amazon.com/ecr/[AWS ECR]
-* https://aws.amazon.com/cloudwatch/[AWS Cloudwatch]
+* https://aws.amazon.com/cloudformation/[AWS CloudFormation^]
+* https://aws.amazon.com/eventbridge/[Amazon EventBridge^]
+* https://aws.amazon.com/lambda/[AWS Lambda^]
+* https://aws.amazon.com/s3/[Amazon S3^]
+* https://aws.amazon.com/ecr/[Amazon ECR^]
+* https://aws.amazon.com/cloudwatch/[Amazon CloudWatch^]
 

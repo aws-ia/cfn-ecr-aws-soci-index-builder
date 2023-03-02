@@ -1,5 +1,5 @@
 // Edit this placeholder text as necessary to describe the deployment options.
 
-This Partner Solution provides one deployment option:
+This solution provides the following deployment option:
 
-* https://qs_launch_permalink[Deploy {partner-product-short-name}^]. This option builds a new workflow consisting of an EventBridge rule, Filtering Lambda function, SOCI Index Generator Lambda function, and IAM resources.
+* https://qs_launch_permalink[Deploy {partner-product-short-name}^]. This option builds a new workflow consisting of an EventBridge rule, filtering Lambda function, SOCI Index generator Lambda function, and IAM resources.

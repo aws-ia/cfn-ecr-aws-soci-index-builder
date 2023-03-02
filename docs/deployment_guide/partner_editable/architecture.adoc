@@ -1,6 +1,6 @@
 :xrefstyle: short
 
-Deploying this Partner Solution with default parameters builds the following {partner-product-short-name} environment in the
+Deploying this solution with default parameters builds the following {partner-product-short-name} environment in the
 AWS Cloud.
 
 // Replace this example diagram with your own. Follow our wiki guidelines: https://w.amazon.com/bin/view/AWS_Quick_Starts/Process_for_PSAs/#HPrepareyourarchitecturediagram. Upload your source PowerPoint file to the GitHub {deployment name}/docs/images/ directory in its repository.
@@ -9,14 +9,15 @@ AWS Cloud.
 .Partner Solution architecture for {partner-product-short-name} on AWS
 image::../docs/deployment_guide/images/aws_cfn_soci_index_builder_architecture_diagram.png[Architecture]
 
-As shown in <<architecture1>>, this Partner Solution sets up the following:
+As shown in <<architecture1>>, this solution sets up the following:
 
-* A CloudFormation stack that contains the following resources:
-** An EventBridge Rule that detects ECR Image Action events for successful image pushes.
-** A Lambda function for filtering ECR Image Action events that match the filters provided in the CloudFormation stack parameters.
-** A Lambda function for generating SOCI indices for matched images and pushing those indices back to images' repositories in Amazon Elastic Container Registry (ECR).
-** AWS Identity and Access Management (IAM) to provide the following:
-*** Permission for Amazon EventBridge to invoke the Filtering Lambda function.
-*** Permission for the Filtering Lambda function to create CloudWatch Logs and to invoke the SOCI Index Generator Lambda function.
-*** Permission for the SOCI Index Generator Lambda function to create CloudWatch Logs and access ECR.
-* Amazon CloudWatch for logs from both Lambda functions that you can use to troubleshoot.
+* An AWS CloudFormation stack that contains the following resources:
+** An Amazon EventBridge rule that detects Amazon Elastic Container Registry (Amazon ECR) Image Action events for successful image pushes.
+** An AWS Lambda function for:
+*** Filtering Amazon ECR Image Action events that match the filters provided in the CloudFormation stack parameters.
+*** Generating SOCI indices for matched images and pushing those indices back to images' repositories in Amazon ECR.
+** AWS Identity and Access Management (IAM) to provide the following permissions:
+*** For EventBridge to invoke the filtering Lambda function.
+*** For the filtering Lambda function to create Amazon CloudWatch logs and to invoke the SOCI Index generator Lambda function.
+*** For the SOCI Index Generator Lambda function to create CloudWatch logs and access Amazon ECR.
+* CloudWatch for logs from both Lambda functions for troubleshooting.

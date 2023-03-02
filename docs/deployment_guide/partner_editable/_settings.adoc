@@ -3,7 +3,7 @@
 :partner-product-name: CFN AWS SOCI Index Builder
 :partner-product-short-name: SOCI Index Builder
 :partner-company-name: Amazon.com, Inc.
-:doc-month: February
+:doc-month: March
 :doc-year: 2023
 :partner-contributors: Amazon Elastic Container Registry (ECR) team
 :aws-ia-contributors: Dylan Owen, Tony Bulding, AWS Integration & Automation team
