@@ -11,13 +11,14 @@ image::../docs/deployment_guide/images/aws_cfn_soci_index_builder_architecture_d
 
 As shown in <<architecture1>>, this solution sets up the following:
 
+* An Amazon Elastic Container Registry (Amazon ECR) to store container images and SOCI artifacts.
 * An AWS CloudFormation stack that contains the following resources:
-** An Amazon EventBridge rule that detects Amazon Elastic Container Registry (Amazon ECR) Image Action events for successful image pushes.
-** An AWS Lambda function for:
-*** Filtering Amazon ECR Image Action events that match the filters provided in the CloudFormation stack parameters.
-*** Generating SOCI indices for matched images and pushing those indices back to images' repositories in Amazon ECR.
+** An Amazon EventBridge rule to detect Amazon ECR image action events and invoke the filtering AWS Lambda function.
+** Two AWS Lambda functions to do the following:
+*** Filter Amazon ECR image action events that match the filters provided in the CloudFormation stack parameters.
+*** Generate SOCI indices for matching images and push  indices back to images repositories in the Amazon ECR registry.
 ** AWS Identity and Access Management (IAM) to provide the following permissions:
-*** For EventBridge to invoke the filtering Lambda function.
-*** For the filtering Lambda function to create Amazon CloudWatch logs and to invoke the SOCI Index generator Lambda function.
-*** For the SOCI Index Generator Lambda function to create CloudWatch logs and access Amazon ECR.
-* CloudWatch for logs from both Lambda functions for troubleshooting.
+*** EventBridge to invoke the filtering Lambda function.
+*** Filtering Lambda function to create Amazon CloudWatch logs and to invoke the SOCI Index Generator Lambda function.
+*** SOCI Index Generator Lambda function to create CloudWatch logs and access the Amazon ECR registry.
+* CloudWatch to collect logs from both Lambda functions for troubleshooting.
