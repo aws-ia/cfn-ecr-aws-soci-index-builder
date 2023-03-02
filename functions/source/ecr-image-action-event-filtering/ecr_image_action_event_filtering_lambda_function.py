@@ -32,21 +32,13 @@ def lambda_handler(event, context):
         }
     """
 
-    try:
-        repository_name = event['detail']['repository-name']
-        image_tag = event['detail']['image-tag']
-        image_digest = event['detail']['image-digest']
+    validation_error = validate_event(event)
+    if validation_error != None:
+        return validation_error
 
-        event_source = event['source']
-        detail_type = event['detail-type']
-    except:
-        return log_and_generate_response(400, "Invalid event")
-
-    if event_source != "aws.ecr" or detail_type != "ECR Image Action":
-        return log_and_generate_response(400, "Wrong event source or detail type")
-
-    if repository_name == "" or image_digest == "":
-        return log_and_generate_response(400, "repository name and image digest cannot be empty")
+    repository_name = event['detail']['repository-name']
+    image_digest = event['detail']['image-digest']
+    image_tag = event['detail'].get('image-tag',"")
 
     try:
         soci_repository_image_tag_filters = os.environ['soci_repository_image_tag_filters'].split(",")
@@ -77,6 +69,43 @@ def lambda_handler(event, context):
                 return log_and_generate_response(500, f'Failed to invoke SOCI index generator Lambda function. Lambda status code: "{lambda_status_code}". Lambda request id: "{lambda_request_id}"')
 
     return log_and_generate_response(200, f'The given event contained the image "{repository_name}:{image_tag}" with digest "{image_digest}" which did not match any SOCI repository image tag filters')
+
+def validate_event(event):
+    if event.get('source') != "aws.ecr":
+        return log_and_generate_response(400, "The event's 'source' must be 'aws.ecr'")
+    if event.get('account') == None:
+        return log_and_generate_response(400, "The event's 'account' must not be empty")
+    if event.get('detail-type') != "ECR Image Action":
+        return log_and_generate_response(400, "The event's 'detail-type' must be 'ECR Image Action'")
+    eventDetail = event.get('detail')
+    if eventDetail == None:
+        return log_and_generate_response(400, "The event's 'detail' must not be empty")
+    if type(eventDetail) is not dict:
+        return log_and_generate_response(400, "The event's 'detail' must be a JSON object literal")
+    if eventDetail.get('action-type') != "PUSH":
+        return log_and_generate_response(400, "The event's 'detail.action-type' must be 'PUSH")
+    if eventDetail.get('result') != "SUCCESS":
+        return log_and_generate_response(400, "The event's 'detail.result' must be 'SUCCESS'")
+    if eventDetail.get('repository-name') == None:
+        return log_and_generate_response(400, "The event's 'detail.repository-name' must not be empty")
+    if eventDetail.get('image-digest') == None:
+        return log_and_generate_response(400, "The event's 'detail.image-digest' must not be empty")
+
+    if re.match('[0-9]{12}', event['account']) == None:
+        return log_and_generate_response(400, "The event's 'account' must be a valid AWS account ID")
+
+    if re.match('(?:[a-z0-9]+(?:[._-][a-z0-9]+)*/)*[a-z0-9]+(?:[._-][a-z0-9]+)*', eventDetail['repository-name']) == None:
+        return log_and_generate_response(400, "The event's 'detail.repository-name' must be a valid repository name")
+
+    if re.match('[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][A-Fa-f0-9]{32,}', eventDetail['image-digest']) == None:
+        return log_and_generate_response(400, "The event's 'detail.image-digest' must be a valid image digest")
+
+    # missing tag is OK
+    if eventDetail.get('image-tag') != None and eventDetail['image-tag'] != "":
+        if re.match('[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}', eventDetail['image-tag']) == None:
+            return log_and_generate_response(400, "The event's 'detail.image-tag' must be empty or a valid image tag")
+
+    return None
 
 def log_and_generate_response(status_code, message):
     log_to_cloudwatch(message)

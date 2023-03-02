@@ -48,21 +48,25 @@ var RegistryNotSupportingOciArtifacts = errors.New("Registry does not support OC
 
 // Authenticate with  ECR and initialize the ECR and SOCI wrapper
 func Init(ctx context.Context, registryUrl string, dataDir string) (*EcrSoci, error) {
+	log.Info(ctx, "Initializing registry client")
 	registry, err := initRegistry(registryUrl)
 	if err != nil {
 		return nil, err
 	}
 
+	log.Info(ctx, "Initializing Containerd store")
 	containerdStore, err := initContainerdStore(dataDir)
 	if err != nil {
 		return nil, err
 	}
 
+	log.Info(ctx, "Initializing OCI store")
 	ociStore, err := initOciStore(ctx, dataDir)
 	if err != nil {
 		return nil, err
 	}
 
+	log.Info(ctx, "Initializing SOCI artifacts store")
 	artifactsDb, err := initSociArtifactsDb(dataDir)
 	if err != nil {
 		return nil, err
@@ -185,13 +189,13 @@ func (ecrSoci *EcrSoci) BuildIndex(ctx context.Context, image images.Image) (*oc
 	}
 	fmt.Println(index.ImageDigest)
 
-	// Write the SOCI index to the oras store
+	// Write the SOCI index to the OCI store
 	err = soci.WriteSociIndex(ctx, index, &ecrSoci.ociStore, ecrSoci.artifactsDb)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get SOCI indices for the image from the oras store
+	// Get SOCI indices for the image from the OCI store
 	// The most recent one is stored last
 	// TODO: consider making soci's WriteSociIndex to return the descriptor directly
 	indexDescriptorInfos, err := soci.GetIndexDescriptorCollection(ctx, ecrSoci.containerdStore, ecrSoci.artifactsDb, image, []ocispec.Platform{platform})
@@ -199,7 +203,7 @@ func (ecrSoci *EcrSoci) BuildIndex(ctx context.Context, image images.Image) (*oc
 		return nil, err
 	}
 	if len(indexDescriptorInfos) == 0 {
-		return nil, errors.New("No SOCI indices found in oras store")
+		return nil, errors.New("No SOCI indices found in OCI store")
 	}
 	return &indexDescriptorInfos[len(indexDescriptorInfos)-1].Descriptor, nil
 }
@@ -217,7 +221,7 @@ func (ecrSoci *EcrSoci) PushIndex(ctx context.Context, indexDesc ocispec.Descrip
 	if err != nil {
 		// TODO: There might be a better way to check if a registry supporting OCI or not
 		if strings.Contains(err.Error(), "Response status code 405: unsupported: Invalid parameter at 'ImageManifest' failed to satisfy constraint: 'Invalid JSON syntax'") {
-			fmt.Printf("[WARN] Error when pushing [err: %v]", err)
+			log.Warn(ctx, fmt.Sprintf("Error when pushing: %v", err))
 			return RegistryNotSupportingOciArtifacts
 		}
 		return err
