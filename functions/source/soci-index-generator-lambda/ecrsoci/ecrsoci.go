@@ -29,59 +29,67 @@ import (
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/platforms"
 
+	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/log"
+
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 type EcrSoci struct {
-	registry        *remote.Registry // remote ECR registry
-	containerdStore content.Store    // containerd's content store
-	ociStore        oci.Store        // oci's content store
+	registry        *remote.Registry  // remote ECR registry
+	containerdStore content.Store     // containerd's content store
+	ociStore        oci.Store         // oci's content store
+	artifactsDb     *soci.ArtifactsDb // SOCI artifacts db
 }
 
-const artifactsStoreName = "/tmp/store"
-const artifactsDbDir = "/tmp/soci"
-
-var artifactsDbPath = path.Join(artifactsDbDir, "artifacts.db")
+const artifactsStoreName = "store"
+const artifactsDbName = "artifacts.db"
 
 var RegistryNotSupportingOciArtifacts = errors.New("Registry does not support OCI artifacts")
 
 // Authenticate with  ECR and initialize the ECR and SOCI wrapper
-func Init(ctx context.Context, registryUrl string) (*EcrSoci, error) {
+func Init(ctx context.Context, registryUrl string, dataDir string) (*EcrSoci, error) {
 	registry, err := initRegistry(registryUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	containerdStore, err := initContainerdStore()
+	containerdStore, err := initContainerdStore(dataDir)
 	if err != nil {
 		return nil, err
 	}
 
-	ociStore, err := initOciStore(ctx)
+	ociStore, err := initOciStore(ctx, dataDir)
 	if err != nil {
 		return nil, err
 	}
 
-	return &EcrSoci{registry: registry, containerdStore: *containerdStore, ociStore: *ociStore}, nil
+	artifactsDb, err := initSociArtifactsDb(dataDir)
+	if err != nil {
+		return nil, err
+	}
+
+	return &EcrSoci{registry: registry, containerdStore: *containerdStore, ociStore: *ociStore, artifactsDb: artifactsDb}, nil
 }
 
 // Init containerd store
-func initContainerdStore() (*content.Store, error) {
-	if _, err := os.Stat(artifactsDbDir); os.IsNotExist(err) {
-		if err = os.Mkdir(artifactsDbDir, 0711); err != nil {
-			return nil, err
-		}
-	} else if err != nil {
-		return nil, err
-	}
-
-	containerdStore, err := local.NewStore(artifactsStoreName)
+func initContainerdStore(dataDir string) (*content.Store, error) {
+	containerdStore, err := local.NewStore(path.Join(dataDir, artifactsStoreName))
 	return &containerdStore, err
 }
 
+// Init a new instance of SOCI artifacts DB
+func initSociArtifactsDb(dataDir string) (*soci.ArtifactsDb, error) {
+	artifactsDbPath := path.Join(dataDir, artifactsDbName)
+	artifactsDb, err := soci.NewDB(artifactsDbPath)
+	if err != nil {
+		return nil, err
+	}
+	return artifactsDb, nil
+}
+
 // Init OCI artifact store
-func initOciStore(ctx context.Context) (*oci.Store, error) {
-	return oci.NewWithContext(ctx, artifactsStoreName)
+func initOciStore(ctx context.Context, dataDir string) (*oci.Store, error) {
+	return oci.NewWithContext(ctx, path.Join(dataDir, artifactsStoreName))
 }
 
 // Initialize a remote registry
@@ -146,6 +154,7 @@ func authorizeEcr(ecrRegistry *remote.Registry) error {
 // Pull an image from the remote registry
 // imageReference can be either a digest or a tag
 func (ecrSoci *EcrSoci) Pull(ctx context.Context, repositoryName string, imageReference string) (*ocispec.Descriptor, error) {
+	log.Info(ctx, "Pulling image")
 	repo, err := ecrSoci.registry.Repository(ctx, repositoryName)
 	if err != nil {
 		return nil, err
@@ -161,15 +170,10 @@ func (ecrSoci *EcrSoci) Pull(ctx context.Context, repositoryName string, imageRe
 
 // Build soci index for an image and returns its ocispec.Descriptor
 func (ecrSoci *EcrSoci) BuildIndex(ctx context.Context, image images.Image) (*ocispec.Descriptor, error) {
+	log.Info(ctx, "Building SOCI index")
 	platform := platforms.DefaultSpec() // TODO: make this a user option
 
-	// Create new instance of an ArtifactDB
-	artifactDb, err := soci.NewDB(artifactsDbPath)
-	if err != nil {
-		return nil, err
-	}
-
-	builder, err := soci.NewIndexBuilder(ecrSoci.containerdStore, &ecrSoci.ociStore, artifactDb, soci.WithMinLayerSize(0), soci.WithPlatform(platform), soci.WithLegacyRegistrySupport)
+	builder, err := soci.NewIndexBuilder(ecrSoci.containerdStore, &ecrSoci.ociStore, ecrSoci.artifactsDb, soci.WithMinLayerSize(0), soci.WithPlatform(platform), soci.WithLegacyRegistrySupport)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +186,7 @@ func (ecrSoci *EcrSoci) BuildIndex(ctx context.Context, image images.Image) (*oc
 	fmt.Println(index.ImageDigest)
 
 	// Write the SOCI index to the oras store
-	err = soci.WriteSociIndex(ctx, index, &ecrSoci.ociStore, artifactDb)
+	err = soci.WriteSociIndex(ctx, index, &ecrSoci.ociStore, ecrSoci.artifactsDb)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +194,7 @@ func (ecrSoci *EcrSoci) BuildIndex(ctx context.Context, image images.Image) (*oc
 	// Get SOCI indices for the image from the oras store
 	// The most recent one is stored last
 	// TODO: consider making soci's WriteSociIndex to return the descriptor directly
-	indexDescriptorInfos, err := soci.GetIndexDescriptorCollection(ctx, ecrSoci.containerdStore, artifactDb, image, []ocispec.Platform{platform})
+	indexDescriptorInfos, err := soci.GetIndexDescriptorCollection(ctx, ecrSoci.containerdStore, ecrSoci.artifactsDb, image, []ocispec.Platform{platform})
 	if err != nil {
 		return nil, err
 	}
@@ -202,6 +206,7 @@ func (ecrSoci *EcrSoci) BuildIndex(ctx context.Context, image images.Image) (*oc
 
 // Push soci index to the remote registry
 func (ecrSoci *EcrSoci) PushIndex(ctx context.Context, indexDesc ocispec.Descriptor, repositoryName string) error {
+	log.Info(ctx, "Pushing SOCI index")
 
 	repo, err := ecrSoci.registry.Repository(ctx, repositoryName)
 	if err != nil {
