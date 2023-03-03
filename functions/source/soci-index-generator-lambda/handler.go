@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -20,23 +21,24 @@ import (
 )
 
 func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (string, error) {
-	// Getting information about the registry, repository, and image
-	// Those information are then stored in the application context
+	ctx, err := validateEvent(ctx, event)
+	if err != nil {
+		return lambdaError(ctx, "ECRImageActionEvent validation error", err)
+	}
+
+	repo := event.Detail.RepositoryName
+	digest := event.Detail.ImageDigest
 	registryUrl := buildEcrRegistryUrl(event)
 	ctx = context.WithValue(ctx, "RegistryURL", registryUrl)
-	repo := event.Detail.RepositoryName
-	ctx = context.WithValue(ctx, "RepositoryName", repo)
-	digest := event.Detail.ImageDigest
-	ctx = context.WithValue(ctx, "ImageDigest", digest)
 
-	// Directory in lambda storage to store images and SOCI artifacts db
+	// Directory in lambda storage to store images and SOCI artifacts
 	dataDir, err := createTempDir(ctx)
 	if err != nil {
-		return lambdaError(ctx, "Data directory create error", err)
+		return lambdaError(ctx, "Directory create error", err)
 	}
 	defer cleanUp(ctx, dataDir)
 
-	// the channel to signal the deadline monitor goroutine to exit early
+	// The channel to signal the deadline monitor goroutine to exit early
 	quitChannel := make(chan int)
 	defer func() {
 		quitChannel <- 1
@@ -44,15 +46,9 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 
 	setDeadline(ctx, quitChannel, dataDir)
 
-	actionType := event.Detail.ActionType
-	if actionType != "PUSH" {
-		err := fmt.Errorf("The event's 'detail.action-type' must be 'PUSH'.")
-		return lambdaError(ctx, "ECR event validation error", err)
-	}
-
 	ecrSoci, err := ecrsoci.Init(ctx, registryUrl, dataDir)
 	if err != nil {
-		return lambdaError(ctx, "EcrSoci initialization error", err)
+		return lambdaError(ctx, "Registry client or local storage initialization error", err)
 	}
 
 	desc, err := ecrSoci.Pull(ctx, repo, digest)
@@ -69,6 +65,7 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 	if err != nil {
 		return lambdaError(ctx, "SOCI index build error", err)
 	}
+	ctx = context.WithValue(ctx, "SOCIIndexDigest", indexDescriptor.Digest.String())
 
 	err = ecrSoci.PushIndex(ctx, *indexDescriptor, repo)
 	if err != nil {
@@ -77,6 +74,80 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 
 	log.Info(ctx, "Successfully built and pushed SOCI index")
 	return "Successfully built and pushed SOCI index", nil
+}
+
+// Validate the given event, populating the context with relevant valid event properties
+func validateEvent(ctx context.Context, event events.ECRImageActionEvent) (context.Context, error) {
+	var errors []error
+
+	if event.Source != "aws.ecr" {
+		errors = append(errors, fmt.Errorf("The event's 'source' must be 'aws.ecr'"))
+	}
+	if event.Account == "" {
+		errors = append(errors, fmt.Errorf("The event's 'account' must not be empty"))
+	}
+	if event.DetailType != "ECR Image Action" {
+		errors = append(errors, fmt.Errorf("The event's 'detail-type' must be 'ECR Image Action'"))
+	}
+	if event.Detail.ActionType != "PUSH" {
+		errors = append(errors, fmt.Errorf("The event's 'detail.action-type' must be 'PUSH'"))
+	}
+	if event.Detail.Result != "SUCCESS" {
+		errors = append(errors, fmt.Errorf("The event's 'detail.result' must be 'SUCCESS'"))
+	}
+	if event.Detail.RepositoryName == "" {
+		errors = append(errors, fmt.Errorf("The event's 'detail.repository-name' must not be empty"))
+	}
+	if event.Detail.ImageDigest == "" {
+		errors = append(errors, fmt.Errorf("The event's 'detail.image-digest' must not be empty"))
+	}
+
+	validAccountId, err := regexp.MatchString(`[0-9]{12}`, event.Account)
+	if err != nil {
+		errors = append(errors, err)
+	}
+	if !validAccountId {
+		errors = append(errors, fmt.Errorf("The event's 'account' must be a valid AWS account ID"))
+	}
+
+	validRepositoryName, err := regexp.MatchString(`(?:[a-z0-9]+(?:[._-][a-z0-9]+)*/)*[a-z0-9]+(?:[._-][a-z0-9]+)*`, event.Detail.RepositoryName)
+	if err != nil {
+		errors = append(errors, err)
+	}
+	if validRepositoryName {
+		ctx = context.WithValue(ctx, "RepositoryName", event.Detail.RepositoryName)
+	} else {
+		errors = append(errors, fmt.Errorf("The event's 'detail.repository-name' must be a valid repository name"))
+	}
+
+	validImageDigest, err := regexp.MatchString(`[[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][A-Fa-f0-9]{32,}`, event.Detail.ImageDigest)
+	if err != nil {
+		errors = append(errors, err)
+	}
+	if validImageDigest {
+		ctx = context.WithValue(ctx, "ImageDigest", event.Detail.ImageDigest)
+	} else {
+		errors = append(errors, fmt.Errorf("The event's 'detail.image-digest' must be a valid image digest"))
+	}
+
+	// missing/empty tag is OK
+	if event.Detail.ImageTag != "" {
+		validImageTag, err := regexp.MatchString(`[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}`, event.Detail.ImageTag)
+		if err != nil {
+			errors = append(errors, err)
+		}
+		if validImageTag {
+			ctx = context.WithValue(ctx, "ImageTag", event.Detail.ImageTag)
+		} else {
+			errors = append(errors, fmt.Errorf("The event's 'detail.image-tag' must be empty or a valid image tag"))
+		}
+	}
+
+	if len(errors) == 0 {
+		return ctx, nil
+	} else {
+		return ctx, errors[0]
+	}
 }
 
 // Returns ecr registry url from an image action event
@@ -99,7 +170,7 @@ func createTempDir(ctx context.Context) (string, error) {
 		log.Warn(ctx, fmt.Sprintf("Free space in /tmp is only %d bytes, which is less than 6GB", freeSpace))
 	}
 
-	log.Info(ctx, "Creating a directory to store images and SOCI artifactsdb")
+	log.Info(ctx, "Creating a directory to store images and SOCI artifacts")
 	lambdaContext, _ := lambdacontext.FromContext(ctx)
 	tempDir, err := os.MkdirTemp("/tmp", lambdaContext.AwsRequestID) // The temp dir name is prefixed by the request id
 	return tempDir, err

@@ -5,9 +5,10 @@ package ecrsoci
 
 import (
 	"context"
-	"github.com/containerd/containerd/images"
 	"os"
 	"testing"
+
+	"github.com/containerd/containerd/images"
 )
 
 // Test all functions of of ecrsoci package
@@ -17,7 +18,7 @@ func TestAll(t *testing.T) {
 
 	registryHost := os.Getenv("REGISTRY_HOST")
 
-	ecrSoci, err := Init(ctx, registryHost)
+	ecrSoci, err := Init(ctx, registryHost, "/tmp")
 
 	desc, err := ecrSoci.Pull(ctx, "redis", "latest")
 	if err != nil {
@@ -29,7 +30,7 @@ func TestAll(t *testing.T) {
 		Target: *desc,
 	}
 
-	ecrSoci.CreateIndex(ctx, image)
+	indexDescriptor, err := ecrSoci.BuildIndex(ctx, image)
 
-	ecrSoci.PushIndex(ctx, image, "redis")
+	ecrSoci.PushIndex(ctx, *indexDescriptor, "redis")
 }
