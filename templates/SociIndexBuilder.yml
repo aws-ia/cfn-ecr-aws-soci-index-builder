@@ -30,7 +30,7 @@ Parameters:
     MaxLength: 63
     Type: String
   QSS3KeyPrefix:
-   AllowedPattern: ^([0-9a-zA-Z!-_\.\*'\(\)/]+/)*$
+    AllowedPattern: ^([0-9a-zA-Z!-_\.\*'\(\)/]+/)*$
     ConstraintDescription: >-
       The S3 key prefix can include numbers, lowercase letters, uppercase letters, 
       hyphens (-), underscores (_), periods (.), asterisks (*), single quotes ('),
