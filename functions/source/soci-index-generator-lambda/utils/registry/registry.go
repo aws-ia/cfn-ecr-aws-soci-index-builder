@@ -25,6 +25,12 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
+const (
+	MediaTypeDockerManifestList = "application/vnd.docker.distribution.manifest.list.v2+json"
+	MediaTypeDockerManifest     = "application/vnd.docker.distribution.manifest.v2+json"
+	MediaTypeOCIManifest        = "application/vnd.oci.image.manifest.v1+json"
+)
+
 type Registry struct {
 	orasRegistry *remote.Registry
 }
@@ -84,6 +90,21 @@ func (registry *Registry) Push(ctx context.Context, ociStore oci.Store, indexDes
 		return err
 	}
 	return nil
+}
+
+// Fetch the media type of an artifact
+func (registry *Registry) GetMediaType(ctx context.Context, repositoryName string, reference string) (string, error) {
+	repo, err := registry.orasRegistry.Repository(ctx, repositoryName)
+	if err != nil {
+		return "", err
+	}
+
+	descriptor, err := repo.Resolve(ctx, reference)
+	if err != nil {
+		return "", err
+	}
+
+	return descriptor.MediaType, nil
 }
 
 // Check if a registry is an ECR registry
