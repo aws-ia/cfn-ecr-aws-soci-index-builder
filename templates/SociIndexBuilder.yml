@@ -1,62 +1,65 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'This AWS solution automates the generation of Seekable OCI (SOCI) index artifacts and storing them in ECR. It provides an easy way for customers to try out SOCI technology to lazily load container images. CFN AWS SOCI Index Builder will asynchronously generate SOCI index artifacts triggered by image pushes to designated ECR repositories and store them in the repository alongside the images they reference. (qs-1tsurulid)'
+Description: 'This AWS solution automates the generation of Seekable OCI (SOCI) index artifacts and stores them in Amazon ECR. It provides an easy way for customers to try SOCI technology to lazily load container images. CFN AWS SOCI Index Builder asynchronously generates SOCI index artifacts triggered by image pushes to designated Amazon ECR repositories and stores them in the repository by the images they reference. (qs-1tsurulid)'
 
 Parameters:
   SociRepositoryImageTagFilters:
     Description: >
-      Comma separated list of SOCI repository image tag filters. Each filter is a
-      repository name followed by a colon, ":", followed by a tag. Both repository
+      Comma-separated list of SOCI repository image tag filters. Each filter is a
+      repository name followed by a colon, ":" and followed by a tag. Both repository
       names and tags may contain wildcards denoted by an asterisk, "*". For example,
       "prod*:latest" matches all images tagged with "latest" that are pushed to any
       repositories that start with "prod", while "dev:*" matches all images pushed
       to the "dev" repository. Use "*:*" to match all images pushed to all
-      repositories in your private registry. This stack will build a SOCI index for
+      repositories in your private registry. This stack builds a SOCI index for
       any images that are pushed to your private registry after this stack is
-      created that match at least one filter.
+      created and match at least one filter.
     Type: CommaDelimitedList
     Default: ''
     AllowedPattern: '(^$|(?:[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*\/)*[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*(:?[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*)*)'
   QSS3BucketName: 
-    Description:
-      Name of the S3 bucket for your copy of the deployment assets.
-      Keep the default name unless you are customizing the template.
-      Changing the name updates code references to point to a new location.
-    AllowedPattern: ^[0-9a-z]+([0-9a-z-]*[0-9a-z])*$
-    ConstraintDescription:
-      The S3 bucket name can include numbers, lowercase letters,
+    AllowedPattern: ^[0-9a-z]+([0-9a-z-\.]*[0-9a-z])*$
+    ConstraintDescription: >-
+      The S3 bucket name can include numbers, lowercase letters, 
       and hyphens (-), but it cannot start or end with a hyphen.
     Default: aws-quickstart
+    Description: >-
+      Name of the S3 bucket for your copy of the deployment assets. Keep the default
+      name unless you are customizing the template. Changing the name updates code 
+      references to point to a new location.
+    MinLength: 3
+    MaxLength: 63
     Type: String
   QSS3KeyPrefix:
-    Description:
-      S3 key prefix that is used to simulate a folder for your copy of the deployment assets.
-      Keep the default prefix unless you are customizing the template.
-      Changing the prefix updates code references to point to a new location.
-    AllowedPattern: ^[0-9a-zA-Z-/]*$
-    ConstraintDescription:
-      The S3 key prefix can include numbers, lowercase letters, uppercase letters,
+   AllowedPattern: ^([0-9a-zA-Z!-_\.\*'\(\)/]+/)*$
+    ConstraintDescription: >-
+      The S3 key prefix can include numbers, lowercase letters, uppercase letters, 
       hyphens (-), underscores (_), periods (.), asterisks (*), single quotes ('),
       open parenthesis ((), close parenthesis ()), and forward slashes (/). End the
       prefix with a forward slash.
     Default: cfn-ecr-aws-soci-index-builder/
+    Description: >-
+      S3 key prefix that is used to simulate a folder for your copy of the 
+      deployment assets. Keep the default prefix unless you are customizing 
+      the template. Changing the prefix updates code references to point to 
+      a new location.
     Type: String
 
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: SOCI Index Builder Configuration
+          default: SOCI Index Builder configuration
         Parameters:
           - SociRepositoryImageTagFilters
       - Label:
-          default: AWS Partner Solution Configuration
+          default: AWS Partner Solution configuration
         Parameters:
           - QSS3BucketName
           - QSS3KeyPrefix
 
     ParameterLabels:
       SociRepositoryImageTagFilters:
-        default: SOCI Repository Image Tag Filters
+        default: SOCI repository image tag filters
       QSS3BucketName:
         default: Partner Solution S3 bucket name
       QSS3KeyPrefix:
@@ -72,8 +75,8 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Description: >
-        Given an Amazon ECR Image Action event from Amazon EventBridge, matches the event's detail.repository-name 
-        and detail.image-tag against one or more known patterns, and invokes the Executor Lambda with the same event on a match.
+        Given an Amazon ECR image action event from EventBridge, matches event detail.repository-name 
+        and detail.image-tag against one or more known patterns and invokes Executor Lambda with the same event on a match.
       Handler: ecr_image_action_event_filtering_lambda_function.lambda_handler
       Runtime: python3.9
       Role: !GetAtt ECRImageActionEventFilteringLambdaRole.Arn
@@ -142,7 +145,7 @@ Resources:
   ECRImageActionEventBridgeRule:
     Type: AWS::Events::Rule
     Properties:
-      Description: "Invokes the ECR Image Action Event Filtering Lambda function when an image is successfully pushed to ECR."
+      Description: "Invokes Amazon ECR image action event filtering Lambda function when image is successfully pushed to ECR."
       EventPattern:
         source: ["aws.ecr"]
         detail-type: ["ECR Image Action"]
@@ -169,7 +172,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Description: >
-        Given an ECR container repository and image, this Lambda generates the image's SOCI artifacts and pushes them to the repository.
+        Given an Amazon ECR container repository and image, Lambda generates image SOCI artifacts and pushes to repository.
       Handler: main
       Runtime: go1.x
       Role: !GetAtt SociIndexGeneratorLambdaRole.Arn
