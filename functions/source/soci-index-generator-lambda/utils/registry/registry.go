@@ -54,14 +54,14 @@ func Init(registryUrl string) (*Registry, error) {
 
 // Pull an image from the remote registry to a local OCI Store
 // imageReference can be either a digest or a tag
-func (registry *Registry) Pull(ctx context.Context, repositoryName string, ociStore oci.Store, imageReference string) (*ocispec.Descriptor, error) {
+func (registry *Registry) Pull(ctx context.Context, repositoryName string, ociStore *oci.Store, imageReference string) (*ocispec.Descriptor, error) {
 	log.Info(ctx, "Pulling image")
 	repo, err := registry.orasRegistry.Repository(ctx, repositoryName)
 	if err != nil {
 		return nil, err
 	}
 
-	imageDescriptor, err := oras.Copy(ctx, repo, imageReference, &ociStore, imageReference, oras.DefaultCopyOptions)
+	imageDescriptor, err := oras.Copy(ctx, repo, imageReference, ociStore, imageReference, oras.DefaultCopyOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (registry *Registry) Pull(ctx context.Context, repositoryName string, ociSt
 // Push a OCI artifact to remote registry
 // descriptor: ocispec Descriptor of the artifact
 // ociStore: the local OCI store
-func (registry *Registry) Push(ctx context.Context, ociStore oci.Store, indexDesc ocispec.Descriptor, repositoryName string) error {
+func (registry *Registry) Push(ctx context.Context, ociStore *oci.Store, indexDesc ocispec.Descriptor, repositoryName string) error {
 	log.Info(ctx, "Pushing artifact")
 
 	repo, err := registry.orasRegistry.Repository(ctx, repositoryName)
@@ -80,7 +80,7 @@ func (registry *Registry) Push(ctx context.Context, ociStore oci.Store, indexDes
 		return err
 	}
 
-	err = oras.CopyGraph(ctx, &ociStore, repo, indexDesc, oras.DefaultCopyGraphOptions)
+	err = oras.CopyGraph(ctx, ociStore, repo, indexDesc, oras.DefaultCopyGraphOptions)
 	if err != nil {
 		// TODO: There might be a better way to check if a registry supporting OCI or not
 		if strings.Contains(err.Error(), "Response status code 405: unsupported: Invalid parameter at 'ImageManifest' failed to satisfy constraint: 'Invalid JSON syntax'") {

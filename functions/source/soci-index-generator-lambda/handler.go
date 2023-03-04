@@ -11,15 +11,27 @@ import (
 	"strings"
 	"time"
 
+	"errors"
 	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/events"
-	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/soci"
 	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/fs"
 	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/log"
 	registryutils "github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/registry"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/containerd/containerd/images"
+	"oras.land/oras-go/v2/content/oci"
+	"path"
+
+	"github.com/awslabs/soci-snapshotter/soci"
+	"github.com/containerd/containerd/content"
+	"github.com/containerd/containerd/content/local"
+	"github.com/containerd/containerd/platforms"
+
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
+
+const artifactsStoreName = "store"
+const artifactsDbName = "artifacts.db"
 
 func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (string, error) {
 	ctx, err := validateEvent(ctx, event)
@@ -57,12 +69,12 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 
 	setDeadline(ctx, quitChannel, dataDir)
 
-	soci_builder, err := soci.Init(ctx, registryUrl, dataDir)
+	ociStore, err := initOciStore(ctx, dataDir)
 	if err != nil {
-		return lambdaError(ctx, "Registry client or local storage initialization error", err)
+		return lambdaError(ctx, "OCI storage initialization error", err)
 	}
 
-	desc, err := registry.Pull(ctx, repo, soci_builder.OciStore, digest)
+	desc, err := registry.Pull(ctx, repo, ociStore, digest)
 	if err != nil {
 		return lambdaError(ctx, "Image pull error", err)
 	}
@@ -72,13 +84,13 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 		Target: *desc,
 	}
 
-	indexDescriptor, err := soci_builder.BuildIndex(ctx, image)
+	indexDescriptor, err := buildIndex(ctx, dataDir, ociStore, image)
 	if err != nil {
 		return lambdaError(ctx, "SOCI index build error", err)
 	}
 	ctx = context.WithValue(ctx, "SOCIIndexDigest", indexDescriptor.Digest.String())
 
-	err = registry.Push(ctx, soci_builder.OciStore, *indexDescriptor, repo)
+	err = registry.Push(ctx, ociStore, *indexDescriptor, repo)
 	if err != nil {
 		return lambdaError(ctx, "SOCI index push error", err)
 	}
@@ -232,6 +244,73 @@ func setDeadline(ctx context.Context, quitChannel chan int, dataDir string) {
 			}
 		}
 	}()
+}
+
+// Init containerd store
+func initContainerdStore(dataDir string) (content.Store, error) {
+	containerdStore, err := local.NewStore(path.Join(dataDir, artifactsStoreName))
+	return containerdStore, err
+}
+
+// Init OCI artifact store
+func initOciStore(ctx context.Context, dataDir string) (*oci.Store, error) {
+	return oci.NewWithContext(ctx, path.Join(dataDir, artifactsStoreName))
+}
+
+// Init a new instance of SOCI artifacts DB
+func initSociArtifactsDb(dataDir string) (*soci.ArtifactsDb, error) {
+	artifactsDbPath := path.Join(dataDir, artifactsDbName)
+	artifactsDb, err := soci.NewDB(artifactsDbPath)
+	if err != nil {
+		return nil, err
+	}
+	return artifactsDb, nil
+}
+
+// Build soci index for an image and returns its ocispec.Descriptor
+func buildIndex(ctx context.Context, dataDir string, ociStore *oci.Store, image images.Image) (*ocispec.Descriptor, error) {
+	log.Info(ctx, "Building SOCI index")
+	platform := platforms.DefaultSpec() // TODO: make this a user option
+
+	artifactsDb, err := initSociArtifactsDb(dataDir)
+	if err != nil {
+		return nil, err
+	}
+
+	containerdStore, err := initContainerdStore(dataDir)
+	if err != nil {
+		return nil, err
+	}
+
+	builder, err := soci.NewIndexBuilder(containerdStore, ociStore, artifactsDb, soci.WithMinLayerSize(0), soci.WithPlatform(platform), soci.WithLegacyRegistrySupport)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build the SOCI index
+	index, err := builder.Build(ctx, image)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(index.ImageDigest)
+
+	// Write the SOCI index to the oras store
+	err = soci.WriteSociIndex(ctx, index, ociStore, artifactsDb)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get SOCI indices for the image from the oras store
+	// The most recent one is stored last
+	// TODO: consider making soci's WriteSociIndex to return the descriptor directly
+	indexDescriptorInfos, err := soci.GetIndexDescriptorCollection(ctx, containerdStore, artifactsDb, image, []ocispec.Platform{platform})
+	if err != nil {
+		return nil, err
+	}
+	if len(indexDescriptorInfos) == 0 {
+		return nil, errors.New("No SOCI indices found in oras store")
+	}
+	return &indexDescriptorInfos[len(indexDescriptorInfos)-1].Descriptor, nil
 }
 
 // Log and return the lambda handler error
