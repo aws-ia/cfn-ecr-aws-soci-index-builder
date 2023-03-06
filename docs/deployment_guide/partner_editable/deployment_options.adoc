@@ -2,4 +2,4 @@
 
 This solution provides the following deployment option:
 
-* https://qs_launch_permalink[Deploy {partner-product-short-name}^]. This option builds a new workflow consisting of an EventBridge rule, filtering Lambda function, SOCI Index generator Lambda function, and IAM resources.
+* https://fwd.aws/wNB78?[Deploy {partner-product-short-name}^]. This option builds a new workflow consisting of an EventBridge rule, filtering Lambda function, SOCI Index generator Lambda function, and IAM resources.
