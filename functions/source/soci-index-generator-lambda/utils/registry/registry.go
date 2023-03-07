@@ -32,31 +32,32 @@ const (
 )
 
 type Registry struct {
-	orasRegistry *remote.Registry
+	registry *remote.Registry
 }
 
 var RegistryNotSupportingOciArtifacts = errors.New("Registry does not support OCI artifacts")
 
 // Initialize a remote registry
-func Init(registryUrl string) (*Registry, error) {
-	orasRegistry, err := remote.NewRegistry(registryUrl)
+func Init(ctx context.Context, registryUrl string) (*Registry, error) {
+	log.Info(ctx, "Initializing registry client")
+	registry, err := remote.NewRegistry(registryUrl)
 	if err != nil {
 		return nil, err
 	}
 	if isEcrRegistry(registryUrl) {
-		err := authorizeEcr(orasRegistry)
+		err := authorizeEcr(registry)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return &Registry{orasRegistry}, nil
+	return &Registry{registry}, nil
 }
 
 // Pull an image from the remote registry to a local OCI Store
 // imageReference can be either a digest or a tag
 func (registry *Registry) Pull(ctx context.Context, repositoryName string, ociStore *oci.Store, imageReference string) (*ocispec.Descriptor, error) {
 	log.Info(ctx, "Pulling image")
-	repo, err := registry.orasRegistry.Repository(ctx, repositoryName)
+	repo, err := registry.registry.Repository(ctx, repositoryName)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +76,7 @@ func (registry *Registry) Pull(ctx context.Context, repositoryName string, ociSt
 func (registry *Registry) Push(ctx context.Context, ociStore *oci.Store, indexDesc ocispec.Descriptor, repositoryName string) error {
 	log.Info(ctx, "Pushing artifact")
 
-	repo, err := registry.orasRegistry.Repository(ctx, repositoryName)
+	repo, err := registry.registry.Repository(ctx, repositoryName)
 	if err != nil {
 		return err
 	}
@@ -84,7 +85,7 @@ func (registry *Registry) Push(ctx context.Context, ociStore *oci.Store, indexDe
 	if err != nil {
 		// TODO: There might be a better way to check if a registry supporting OCI or not
 		if strings.Contains(err.Error(), "Response status code 405: unsupported: Invalid parameter at 'ImageManifest' failed to satisfy constraint: 'Invalid JSON syntax'") {
-			fmt.Printf("[WARN] Error when pushing [err: %v]", err)
+			log.Warn(ctx, fmt.Sprintf("Error when pushing: %v", err))
 			return RegistryNotSupportingOciArtifacts
 		}
 		return err
@@ -94,7 +95,7 @@ func (registry *Registry) Push(ctx context.Context, ociStore *oci.Store, indexDe
 
 // Fetch the media type of an artifact
 func (registry *Registry) GetMediaType(ctx context.Context, repositoryName string, reference string) (string, error) {
-	repo, err := registry.orasRegistry.Repository(ctx, repositoryName)
+	repo, err := registry.registry.Repository(ctx, repositoryName)
 	if err != nil {
 		return "", err
 	}

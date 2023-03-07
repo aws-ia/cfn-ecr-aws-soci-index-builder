@@ -44,12 +44,12 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 	registryUrl := buildEcrRegistryUrl(event)
 	ctx = context.WithValue(ctx, "RegistryURL", registryUrl)
 
-	registry, err := registryutils.Init(registryUrl)
+	registry, err := registryutils.Init(ctx, registryUrl)
 	if err != nil {
 		return lambdaError(ctx, "Remote registry initialization error", err)
 	}
 
-	err = validateImageDigest(registry, repo, digest)
+	err = validateImageDigest(ctx, registry, repo, digest)
 	if err != nil {
 		return lambdaError(ctx, "Remote image digest validation error", err)
 	}
@@ -174,8 +174,8 @@ func validateEvent(ctx context.Context, event events.ECRImageActionEvent) (conte
 }
 
 // Validate the given remote image digest
-func validateImageDigest(registry *registryutils.Registry, repository string, digest string) error {
-	mediaType, err := registry.GetMediaType(context.Background(), repository, digest)
+func validateImageDigest(ctx context.Context, registry *registryutils.Registry, repository string, digest string) error {
+	mediaType, err := registry.GetMediaType(ctx, repository, digest)
 
 	if err != nil {
 		return err
@@ -292,15 +292,14 @@ func buildIndex(ctx context.Context, dataDir string, ociStore *oci.Store, image 
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(index.ImageDigest)
 
-	// Write the SOCI index to the oras store
+	// Write the SOCI index to the OCI store
 	err = soci.WriteSociIndex(ctx, index, ociStore, artifactsDb)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get SOCI indices for the image from the oras store
+	// Get SOCI indices for the image from the OCI store
 	// The most recent one is stored last
 	// TODO: consider making soci's WriteSociIndex to return the descriptor directly
 	indexDescriptorInfos, err := soci.GetIndexDescriptorCollection(ctx, containerdStore, artifactsDb, image, []ocispec.Platform{platform})
@@ -308,7 +307,7 @@ func buildIndex(ctx context.Context, dataDir string, ociStore *oci.Store, image 
 		return nil, err
 	}
 	if len(indexDescriptorInfos) == 0 {
-		return nil, errors.New("No SOCI indices found in oras store")
+		return nil, errors.New("No SOCI indices found in OCI store")
 	}
 	return &indexDescriptorInfos[len(indexDescriptorInfos)-1].Descriptor, nil
 }
