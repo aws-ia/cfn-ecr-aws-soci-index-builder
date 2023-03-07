@@ -6,6 +6,7 @@
 2. Sign in to the CloudFormation console or call the CloudFormation CreateStack API with credentials that have permissions to create, update, rollback, or delete a stack. For more information, refer to https://docs.amazonaws.cn/en_us/AWSCloudFormation/latest/UserGuide/using-iam-template.html[Controlling access with Amazon Identity and Access Management^]. This IAM role or user must also have permissions to perform at least the following actions so CloudFormation can create, modify, and delete the resources in the stack:
 
 ** Eventbridge permissions
++
 [source, json]
 ----
 {
@@ -25,8 +26,10 @@
     ]
 }
 ----
++
 
-*** S3 permissions (to fetch Lambda code)
+** S3 permissions (to fetch Lambda code)
++
 [source, json]
 ----
 {
@@ -45,8 +48,10 @@
     ]
 }
 ----
++
 
-*** Lambda permissions
+** Lambda permissions
++
 [source, json]
 ----
 {
@@ -70,8 +75,10 @@
     ]
 }
 ----
++
 
-*** IAM permissions
+** IAM permissions
++
 [source, json]
 ----
 {
