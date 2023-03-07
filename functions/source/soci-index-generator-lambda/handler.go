@@ -51,7 +51,9 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 
 	err = validateImageDigest(ctx, registry, repo, digest)
 	if err != nil {
-		return lambdaError(ctx, "Remote image digest validation error", err)
+		log.Warn(ctx, fmt.Sprintf("Image digest validation error %v", err))
+		// Returning a non error to skip retries
+		return "Invalid image digest", nil
 	}
 
 	// Directory in lambda storage to store images and SOCI artifacts

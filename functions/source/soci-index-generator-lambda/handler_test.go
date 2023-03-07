@@ -86,11 +86,11 @@ func TestHandlerInvalidDigestMediaType(t *testing.T) {
 	defer cancel()
 
 	resp, err := HandleRequest(ctx, event)
-	if err == nil {
-		t.Fatalf("HandleRequest is expected to fail")
+	if err != nil {
+		t.Fatalf("Invalid image digest is not expected to fail")
 	}
 
-	expected_resp := "Remote image digest validation error"
+	expected_resp := "Invalid image digest"
 	if resp != expected_resp {
 		t.Fatalf("Unexpected response. Expected %s but got %s", expected_resp, resp)
 	}
