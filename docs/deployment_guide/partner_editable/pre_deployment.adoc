@@ -2,10 +2,11 @@
 
 == Predeployment steps
 
-1. Create Amazon ECR repository to store container images and generated SOCI artifacts.
+1. Create an Amazon ECR repository to store container images and generated SOCI artifacts.
 2. Sign in to the CloudFormation console or call the CloudFormation CreateStack API with credentials that have permissions to create, update, rollback, or delete a stack. For more information, refer to https://docs.amazonaws.cn/en_us/AWSCloudFormation/latest/UserGuide/using-iam-template.html[Controlling access with Amazon Identity and Access Management^]. This IAM role or user must also have permissions to perform at least the following actions so CloudFormation can create, modify, and delete the resources in the stack:
 
-* Eventbridge permissions
+** Eventbridge permissions
++
 [source, json]
 ----
 {
@@ -25,8 +26,10 @@
     ]
 }
 ----
++
 
 ** S3 permissions (to fetch Lambda code)
++
 [source, json]
 ----
 {
@@ -45,8 +48,10 @@
     ]
 }
 ----
++
 
 ** Lambda permissions
++
 [source, json]
 ----
 {
@@ -70,8 +75,10 @@
     ]
 }
 ----
++
 
 ** IAM permissions
++
 [source, json]
 ----
 {
@@ -98,6 +105,7 @@
 ----
 
 Notes:
+
 * `<AccountId>` should be replaced by the AWS Account ID of the account you’re deploying to and `<Region>` should be replaced by the region you’re deploying to (example: us-east-1).
 
 * The role name _ECRImageActionEventFilteringLambdaRole_, specified in the resource section of the IAM permissions above, will be truncated if the name of your stack is greater than 12 characters.
