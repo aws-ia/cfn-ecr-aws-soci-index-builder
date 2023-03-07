@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package logging provides log functions with common contextual information such as Aws Request Id, Repository Name, Image Digest, etc.
 package log
 
