@@ -178,19 +178,20 @@ func validateEvent(ctx context.Context, event events.ECRImageActionEvent) (conte
 
 // Validate the given remote image digest
 func validateImageDigest(ctx context.Context, registry *registryutils.Registry, repository string, digest string) error {
+	supportedMediaTypes := []string{registryutils.MediaTypeDockerManifest, registryutils.MediaTypeOCIManifest}
 	mediaType, err := registry.GetMediaType(ctx, repository, digest)
 
 	if err != nil {
 		return err
 	}
 
-	switch mediaType {
-	case
-		registryutils.MediaTypeDockerManifest,
-		registryutils.MediaTypeOCIManifest:
-		return nil
+	for _, supportedMediaType := range supportedMediaTypes {
+		if mediaType == supportedMediaType {
+			return nil
+		}
 	}
-	return fmt.Errorf("Unexpected media type %s, expected %s", mediaType, registryutils.MediaTypeDockerManifest)
+
+	return fmt.Errorf("Unexpected media type %s, expected one of: %v", mediaType, supportedMediaTypes)
 }
 
 // Returns ecr registry url from an image action event
