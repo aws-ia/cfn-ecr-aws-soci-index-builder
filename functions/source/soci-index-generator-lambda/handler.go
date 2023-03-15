@@ -184,11 +184,13 @@ func validateImageDigest(ctx context.Context, registry *registryutils.Registry, 
 		return err
 	}
 
-	if mediaType != registryutils.MediaTypeDockerManifest {
-		return fmt.Errorf("Unexpected media type %s, expected %s", mediaType, registryutils.MediaTypeDockerManifest)
+	switch mediaType {
+	case
+		registryutils.MediaTypeDockerManifest,
+		registryutils.MediaTypeOCIManifest:
+		return nil
 	}
-
-	return nil
+	return fmt.Errorf("Unexpected media type %s, expected %s", mediaType, registryutils.MediaTypeDockerManifest)
 }
 
 // Returns ecr registry url from an image action event
