@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -284,7 +285,7 @@ func buildIndex(ctx context.Context, dataDir string, ociStore *oci.Store, image 
 		return nil, err
 	}
 
-	builder, err := soci.NewIndexBuilder(containerdStore, ociStore, artifactsDb, soci.WithMinLayerSize(0), soci.WithPlatform(platform), soci.WithLegacyRegistrySupport)
+	builder, err := soci.NewIndexBuilder(containerdStore, ociStore, artifactsDb, soci.WithMinLayerSize(0), soci.WithPlatform(platform))
 	if err != nil {
 		return nil, err
 	}
@@ -302,15 +303,18 @@ func buildIndex(ctx context.Context, dataDir string, ociStore *oci.Store, image 
 	}
 
 	// Get SOCI indices for the image from the OCI store
-	// The most recent one is stored last
 	// TODO: consider making soci's WriteSociIndex to return the descriptor directly
-	indexDescriptorInfos, err := soci.GetIndexDescriptorCollection(ctx, containerdStore, artifactsDb, image, []ocispec.Platform{platform})
+	indexDescriptorInfos, _, err := soci.GetIndexDescriptorCollection(ctx, containerdStore, artifactsDb, image, []ocispec.Platform{platform})
 	if err != nil {
 		return nil, err
 	}
 	if len(indexDescriptorInfos) == 0 {
 		return nil, errors.New("No SOCI indices found in OCI store")
 	}
+	sort.Slice(indexDescriptorInfos, func(i, j int) bool {
+		return indexDescriptorInfos[i].CreatedAt.Before(indexDescriptorInfos[j].CreatedAt)
+	})
+
 	return &indexDescriptorInfos[len(indexDescriptorInfos)-1].Descriptor, nil
 }
 
