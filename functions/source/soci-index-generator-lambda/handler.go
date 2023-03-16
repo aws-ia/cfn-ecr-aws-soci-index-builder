@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -177,17 +178,20 @@ func validateEvent(ctx context.Context, event events.ECRImageActionEvent) (conte
 
 // Validate the given remote image digest
 func validateImageDigest(ctx context.Context, registry *registryutils.Registry, repository string, digest string) error {
+	supportedMediaTypes := []string{registryutils.MediaTypeDockerManifest, registryutils.MediaTypeOCIManifest}
 	mediaType, err := registry.GetMediaType(ctx, repository, digest)
 
 	if err != nil {
 		return err
 	}
 
-	if mediaType != registryutils.MediaTypeDockerManifest {
-		return fmt.Errorf("Unexpected media type %s, expected %s", mediaType, registryutils.MediaTypeDockerManifest)
+	for _, supportedMediaType := range supportedMediaTypes {
+		if mediaType == supportedMediaType {
+			return nil
+		}
 	}
 
-	return nil
+	return fmt.Errorf("Unexpected media type %s, expected one of: %v", mediaType, supportedMediaTypes)
 }
 
 // Returns ecr registry url from an image action event
@@ -284,7 +288,7 @@ func buildIndex(ctx context.Context, dataDir string, ociStore *oci.Store, image 
 		return nil, err
 	}
 
-	builder, err := soci.NewIndexBuilder(containerdStore, ociStore, artifactsDb, soci.WithMinLayerSize(0), soci.WithPlatform(platform), soci.WithLegacyRegistrySupport)
+	builder, err := soci.NewIndexBuilder(containerdStore, ociStore, artifactsDb, soci.WithMinLayerSize(0), soci.WithPlatform(platform))
 	if err != nil {
 		return nil, err
 	}
@@ -302,15 +306,18 @@ func buildIndex(ctx context.Context, dataDir string, ociStore *oci.Store, image 
 	}
 
 	// Get SOCI indices for the image from the OCI store
-	// The most recent one is stored last
 	// TODO: consider making soci's WriteSociIndex to return the descriptor directly
-	indexDescriptorInfos, err := soci.GetIndexDescriptorCollection(ctx, containerdStore, artifactsDb, image, []ocispec.Platform{platform})
+	indexDescriptorInfos, _, err := soci.GetIndexDescriptorCollection(ctx, containerdStore, artifactsDb, image, []ocispec.Platform{platform})
 	if err != nil {
 		return nil, err
 	}
 	if len(indexDescriptorInfos) == 0 {
 		return nil, errors.New("No SOCI indices found in OCI store")
 	}
+	sort.Slice(indexDescriptorInfos, func(i, j int) bool {
+		return indexDescriptorInfos[i].CreatedAt.Before(indexDescriptorInfos[j].CreatedAt)
+	})
+
 	return &indexDescriptorInfos[len(indexDescriptorInfos)-1].Descriptor, nil
 }
 
