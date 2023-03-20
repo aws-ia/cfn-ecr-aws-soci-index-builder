@@ -50,11 +50,11 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 		return lambdaError(ctx, "Remote registry initialization error", err)
 	}
 
-	err = validateImageDigest(ctx, registry, repo, digest)
+	err = registry.ValidateImageManifest(ctx, repo, digest)
 	if err != nil {
-		log.Warn(ctx, fmt.Sprintf("Image digest validation error %v", err))
+		log.Warn(ctx, fmt.Sprintf("Image manifest validation error: %v", err))
 		// Returning a non error to skip retries
-		return "Invalid image digest", nil
+		return "Exited early due to manifest validation error", nil
 	}
 
 	// Directory in lambda storage to store images and SOCI artifacts
@@ -174,24 +174,6 @@ func validateEvent(ctx context.Context, event events.ECRImageActionEvent) (conte
 	} else {
 		return ctx, errors[0]
 	}
-}
-
-// Validate the given remote image digest
-func validateImageDigest(ctx context.Context, registry *registryutils.Registry, repository string, digest string) error {
-	supportedMediaTypes := []string{registryutils.MediaTypeDockerManifest, registryutils.MediaTypeOCIManifest}
-	mediaType, err := registry.GetMediaType(ctx, repository, digest)
-
-	if err != nil {
-		return err
-	}
-
-	for _, supportedMediaType := range supportedMediaTypes {
-		if mediaType == supportedMediaType {
-			return nil
-		}
-	}
-
-	return fmt.Errorf("Unexpected media type %s, expected one of: %v", mediaType, supportedMediaTypes)
 }
 
 // Returns ecr registry url from an image action event

@@ -5,8 +5,10 @@ package registry
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"regexp"
@@ -29,7 +31,22 @@ const (
 	MediaTypeDockerManifestList = "application/vnd.docker.distribution.manifest.list.v2+json"
 	MediaTypeDockerManifest     = "application/vnd.docker.distribution.manifest.v2+json"
 	MediaTypeOCIManifest        = "application/vnd.oci.image.manifest.v1+json"
+
+	MediaTypeDockerImageConfig = "application/vnd.docker.container.image.v1+json"
+	MediaTypeOCIImageConfig    = "application/vnd.oci.image.config.v1+json"
 )
+
+// When a manifest describes an image, the values of this map are the expected manifest config's media types
+var ImageMediaTypeConfigMap = map[string]string{
+	MediaTypeDockerManifest: MediaTypeDockerImageConfig,
+	MediaTypeOCIManifest:    MediaTypeOCIImageConfig,
+}
+
+// List of media types for images
+var ImageMediaTypes = []string{
+	MediaTypeDockerManifest,
+	MediaTypeOCIManifest,
+}
 
 type Registry struct {
 	registry *remote.Registry
@@ -93,19 +110,97 @@ func (registry *Registry) Push(ctx context.Context, ociStore *oci.Store, indexDe
 	return nil
 }
 
-// Fetch the media type of an artifact
-func (registry *Registry) GetMediaType(ctx context.Context, repositoryName string, reference string) (string, error) {
+// Call registry's headManifest and return the manifest's descriptor
+func (registry *Registry) HeadManifest(ctx context.Context, repositoryName string, reference string) (ocispec.Descriptor, error) {
 	repo, err := registry.registry.Repository(ctx, repositoryName)
 	if err != nil {
-		return "", err
+		return ocispec.Descriptor{}, err
 	}
 
 	descriptor, err := repo.Resolve(ctx, reference)
 	if err != nil {
-		return "", err
+		return descriptor, err
 	}
 
-	return descriptor.MediaType, nil
+	return descriptor, nil
+}
+
+// Call registry's getManifest and return the image's manifest
+// The image reference must be a digest because that's what oras-go FetchReference takes
+func (registry *Registry) GetManifest(ctx context.Context, repositoryName string, digest string) (ocispec.Manifest, error) {
+	repo, err := registry.registry.Repository(ctx, repositoryName)
+	var manifest ocispec.Manifest
+	if err != nil {
+		return manifest, err
+	}
+
+	_, rc, err := repo.FetchReference(ctx, digest)
+	if err != nil {
+		return manifest, err
+	}
+
+	bytes, err := io.ReadAll(rc)
+	if err != nil {
+		return manifest, err
+	}
+
+	err = json.Unmarshal(bytes, &manifest)
+	if err != nil {
+		return manifest, err
+	}
+
+	return manifest, nil
+}
+
+// Validate if a tag or digest is a valid image manifest
+func (registry *Registry) ValidateImageManifest(ctx context.Context, repositoryName string, reference string) error {
+	// We have to use HeadManifest, other than GetManifest, to get the manifest mediaType,
+	// because MediaType is not a required field for OCI image manifest.
+	// ECR still returns mediaType in headManifest.
+	descriptor, err := registry.HeadManifest(ctx, repositoryName, reference)
+	if err != nil {
+		return err
+	}
+
+	manifestMediaTypeValid := false
+	for _, supportedMediaType := range ImageMediaTypes {
+		if descriptor.MediaType == supportedMediaType {
+			manifestMediaTypeValid = true
+			break
+		}
+	}
+
+	if !manifestMediaTypeValid {
+		return fmt.Errorf("Unexpected manifest media type %s, expected one of: %v.", descriptor.MediaType, ImageMediaTypes)
+	}
+
+	// validating config media type
+	manifest, err := registry.GetManifest(ctx, repositoryName, descriptor.Digest.String())
+	if err != nil {
+		return err
+	}
+
+	if !isImage(ctx, descriptor.MediaType, manifest) {
+		return fmt.Errorf("Manifest is not for an image.")
+	}
+
+	return nil
+}
+
+// Check if an manifest is an image manifest
+func isImage(ctx context.Context, manifestMediaType string, manifest ocispec.Manifest) bool {
+	expectedConfigMediaType, found := ImageMediaTypeConfigMap[manifestMediaType]
+	if !found {
+		log.Info(ctx, fmt.Sprintf("Unexpected manifest media type %s, expected one of: %v.", manifest.MediaType, ImageMediaTypes))
+		return false
+	}
+
+	if expectedConfigMediaType != manifest.Config.MediaType {
+		log.Info(ctx, fmt.Sprintf("Unexpected config media type %s, expected %s.", manifest.Config.MediaType, expectedConfigMediaType))
+		return false
+	}
+
+	return true
 }
 
 // Check if a registry is an ECR registry
