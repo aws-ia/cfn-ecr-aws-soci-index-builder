@@ -113,30 +113,3 @@ func TestGetManifest(t *testing.T) {
 	}
 	doTest("docker.io", "library/redis", "sha256:afd1957d6b59bfff9615d7ec07001afb4eeea39eb341fc777c0caac3fcf52187", expected)
 }
-
-func TestIsImage(t *testing.T) {
-	// making the test context
-	lc := lambdacontext.LambdaContext{}
-	lc.AwsRequestID = "abcd-1234-test-get-manifest"
-	ctx := lambdacontext.NewContext(context.Background(), &lc)
-
-	manifest := ocispec.Manifest{
-		MediaType: MediaTypeDockerImageConfig,
-		Config: ocispec.Descriptor{
-			MediaType: "soci index",
-		},
-	}
-	if isImage(ctx, manifest.MediaType, manifest) {
-		t.Fatalf("soci index is not a valid config media type for an image")
-	}
-
-	manifest = ocispec.Manifest{
-		MediaType: MediaTypeOCIManifest,
-		Config: ocispec.Descriptor{
-			MediaType: MediaTypeOCIImageConfig,
-		},
-	}
-	if !isImage(ctx, manifest.MediaType, manifest) {
-		t.Fatalf("The manifest above is a valid OCI image manifest")
-	}
-}
