@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/aws/aws-lambda-go v1.36.1
 	github.com/aws/aws-sdk-go v1.44.175
-	github.com/awslabs/soci-snapshotter v0.0.0-20230314131851-ba3498114873
+	github.com/awslabs/soci-snapshotter v0.1.0
 	github.com/containerd/containerd v1.6.19
 	github.com/opencontainers/image-spec v1.1.0-rc2
 	github.com/rs/zerolog v1.29.0

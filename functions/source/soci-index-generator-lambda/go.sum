@@ -4,8 +4,8 @@ github.com/aws/aws-lambda-go v1.36.1 h1:CJxGkL9uKszIASRDxzcOcLX6juzTLoTKtCIgUGcT
 github.com/aws/aws-lambda-go v1.36.1/go.mod h1:jwFe2KmMsHmffA1X2R09hH6lFzJQxzI8qK17ewzbQMM=
 github.com/aws/aws-sdk-go v1.44.175 h1:c0NzHHnPXV5kJoTUFQxFN5cUPpX1SxO635XnwL5/oIY=
 github.com/aws/aws-sdk-go v1.44.175/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
-github.com/awslabs/soci-snapshotter v0.0.0-20230314131851-ba3498114873 h1:v7kDEfc7ENjJ9uhwW0Eni0FYNu0wiRSwuZ/2ywcGiJc=
-github.com/awslabs/soci-snapshotter v0.0.0-20230314131851-ba3498114873/go.mod h1:3FWOSLiSEFx9GnFEucRij4TX/zm31Kc2SV/XOPypK+o=
+github.com/awslabs/soci-snapshotter v0.1.0 h1:unLqhcXaQ4dMg2r84jdP1RSf326ba6Oi4XqW+r5Hcs8=
+github.com/awslabs/soci-snapshotter v0.1.0/go.mod h1:3FWOSLiSEFx9GnFEucRij4TX/zm31Kc2SV/XOPypK+o=
 github.com/containerd/cgroups v1.1.0 h1:v8rEWFl6EoqHB+swVNjVoCJE8o3jX7e8nqBGPLaDFBM=
 github.com/containerd/containerd v1.6.19 h1:F0qgQPrG0P2JPgwpxWxYavrVeXAG0ezUIB9Z/4FTUAU=
 github.com/containerd/containerd v1.6.19/go.mod h1:HZCDMn4v/Xl2579/MvtOC2M206i+JJ6VxFWU/NetrGY=

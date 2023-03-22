@@ -5,8 +5,10 @@ package registry
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"regexp"
@@ -29,7 +31,13 @@ const (
 	MediaTypeDockerManifestList = "application/vnd.docker.distribution.manifest.list.v2+json"
 	MediaTypeDockerManifest     = "application/vnd.docker.distribution.manifest.v2+json"
 	MediaTypeOCIManifest        = "application/vnd.oci.image.manifest.v1+json"
+
+	MediaTypeDockerImageConfig = "application/vnd.docker.container.image.v1+json"
+	MediaTypeOCIImageConfig    = "application/vnd.oci.image.config.v1+json"
 )
+
+// List of config's media type for images
+var ImageConfigMediaTypes = []string{MediaTypeDockerImageConfig, MediaTypeOCIImageConfig}
 
 type Registry struct {
 	registry *remote.Registry
@@ -93,19 +101,66 @@ func (registry *Registry) Push(ctx context.Context, ociStore *oci.Store, indexDe
 	return nil
 }
 
-// Fetch the media type of an artifact
-func (registry *Registry) GetMediaType(ctx context.Context, repositoryName string, reference string) (string, error) {
+// Call registry's headManifest and return the manifest's descriptor
+func (registry *Registry) HeadManifest(ctx context.Context, repositoryName string, reference string) (ocispec.Descriptor, error) {
 	repo, err := registry.registry.Repository(ctx, repositoryName)
 	if err != nil {
-		return "", err
+		return ocispec.Descriptor{}, err
 	}
 
 	descriptor, err := repo.Resolve(ctx, reference)
 	if err != nil {
-		return "", err
+		return descriptor, err
 	}
 
-	return descriptor.MediaType, nil
+	return descriptor, nil
+}
+
+// Call registry's getManifest and return the image's manifest
+// The image reference must be a digest because that's what oras-go FetchReference takes
+func (registry *Registry) GetManifest(ctx context.Context, repositoryName string, digest string) (ocispec.Manifest, error) {
+	repo, err := registry.registry.Repository(ctx, repositoryName)
+	var manifest ocispec.Manifest
+	if err != nil {
+		return manifest, err
+	}
+
+	_, rc, err := repo.FetchReference(ctx, digest)
+	if err != nil {
+		return manifest, err
+	}
+
+	bytes, err := io.ReadAll(rc)
+	if err != nil {
+		return manifest, err
+	}
+
+	err = json.Unmarshal(bytes, &manifest)
+	if err != nil {
+		return manifest, err
+	}
+
+	return manifest, nil
+}
+
+// Validate if a digest is a valid image manifest
+func (registry *Registry) ValidateImageManifest(ctx context.Context, repositoryName string, digest string) error {
+	manifest, err := registry.GetManifest(ctx, repositoryName, digest)
+	if err != nil {
+		return err
+	}
+
+	if manifest.Config.MediaType == "" {
+		return fmt.Errorf("Empty config media type.")
+	}
+
+	for _, configMediaType := range ImageConfigMediaTypes {
+		if manifest.Config.MediaType == configMediaType {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("Unexpected config media type: %s, expected one of: %v.", manifest.Config.MediaType, ImageConfigMediaTypes)
 }
 
 // Check if a registry is an ECR registry
