@@ -82,13 +82,16 @@ version 0.9.30
 
 (Raise a PR to the upstream repo from your fork)
 
-When a Pull Request is raised against the upstream repo. 
+#### When a Pull Request is raised against the upstream repo. 
 - Automated tests will run and provide you instant feedback. 
 When all Check have PR Check have PASSED and functional test will begin (code in all regions specfied in .taskcat.yml)
 
+#### Licensing
+- When adding new dependencies, contributors should verify that any third-party packages or libraries they add have a compatible license. We also encourage contributors to run the dependency scanning script `dependency-licenses.sh` to check Go and Python dependencies for proper licensing.
+
 If these tests pass the PR will be merged to main and synced to S3
 
-For more information, see the [AWS Quick Start Contributor's Kit](https://aws-quickstart.github.io/)
+For more information, see the [Contributor's & Builder's Guide for CloudFormation-based AWS Partner Solutions](https://aws-quickstart.github.io/option2.html)
 
 ## Reporting Bugs/Feature Requests
 
