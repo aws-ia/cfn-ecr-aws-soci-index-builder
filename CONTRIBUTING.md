@@ -1,13 +1,14 @@
-# Getting Started
+# Contributing Guidelines
 
-## 1. Fork this repo 
+## Contributing via Pull Requests
+### 1. Fork this repo 
 **[IMPORTANT]: Write access is not provided to this repo. Please be sure to work in your fork**
 
 Use fork button in the GitHub UI 
 
 <img width="151" alt="Screen Shot 2022-07-14 at 9 34 41 AM" src="https://user-images.githubusercontent.com/5912128/179034198-b4c258a0-15e3-4ef6-9e2d-fc18a70f1dbe.png">
 
-## 2. Clone your repo and develop the asset
+### 2. Clone your repo and develop the asset
 
 **[From your local terminal]** Run `git clone <repo url>`
 
@@ -15,7 +16,7 @@ __Note: Repo url is within your git user namespace so you will have write access
 
 Add your code to /template/`name_of_cfntemplate.yaml`
 
-## 3. Setting up testing toolkit (recommended)
+### 3. Setting up testing toolkit (recommended)
 3a. Setup a python env (3.8.x <3.9)
 
 3b. Setup a default aws profile
@@ -74,17 +75,33 @@ version 0.9.30
 [INFO   ] : ┏ stack Ⓜ tCaT-cfn-template-sample-304f89e2a420412e842b8d9fb66e102e
 [INFO   ] : ┣ region: us-east-1                                                                                         
 [INFO   ] : ┗ status: DELETE_COMPLETE
+```
 
 
-## Step4: Submit for Publication
+### 4. Submit for Publication
 
 (Raise a PR to the upstream repo from your fork)
 
-When a Pull Request is raised against the upstream repo. 
+#### When a Pull Request is raised against the upstream repo. 
 - Automated tests will run and provide you instant feedback. 
 When all Check have PR Check have PASSED and functional test will begin (code in all regions specfied in .taskcat.yml)
 
+#### Licensing
+- When adding new dependencies, contributors should verify that any third-party packages or libraries they add have a compatible license. We also encourage contributors to run the dependency scanning script `dependency-licenses.sh` to check Go and Python dependencies for proper licensing.
+
 If these tests pass the PR will be merged to main and synced to S3
 
+For more information, see the [Contributor's & Builder's Guide for CloudFormation-based AWS Partner Solutions](https://aws-quickstart.github.io/option2.html)
 
+## Reporting Bugs/Feature Requests
 
+When filing an issue, please check existing open, or recently closed, issues to make sure somebody else hasn't already
+reported the issue. Please try to include as much information as you can. Details like these are incredibly useful:
+
+* A reproducible test case or series of steps
+* The version of our code being used
+* Any modifications you've made relevant to the bug
+* Anything unusual about your environment or deployment
+
+## Security Issue Notifications
+If you discover a potential security issue in this project we ask that you notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/). Please do **not** create a public GitHub issue.
