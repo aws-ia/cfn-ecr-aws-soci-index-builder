@@ -17,12 +17,12 @@ __Note: Repo url is within your git user namespace so you will have write access
 Add your code to /template/`name_of_cfntemplate.yaml`
 
 ### 3. Setting up testing toolkit (recommended)
-3a. Setup a python env (3.8.x <3.9)
+3a. Setup a python env (3.8.x <3.9).
 
 3b. Setup a default aws profile
 
 ```
-Example of 2b.: more info here https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html
+Example of 3b.: more info here https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html
 [default]
 aws_access_key_id=AKIAIOSFODNN7EXAMPLE
 aws_secret_access_key=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
@@ -78,18 +78,18 @@ version 0.9.30
 ```
 
 
-### 4. Submit for Publication
+### 4. Licensing
+- When adding new dependencies, contributors should verify that any third-party packages or libraries they add have a compatible license. We also encourage contributors to run the dependency. scanning script `dependency-licenses.sh` to check Go and Python dependencies for proper licensing.
+- Before running the script, set the Go environment variable `GOPATH` to ` $HOME/go` . Make sure `$HOME/.local/bin` is added to system PATH.
+- Contributors should ensure that any required licenses are added to `THIRD_PARTY_LICENSES` if they are not already present.
+
+### 5. Submit for Publication
 
 (Raise a PR to the upstream repo from your fork)
 
 #### When a Pull Request is raised against the upstream repo. 
 - Automated tests will run and provide you instant feedback. 
-When all Check have PR Check have PASSED and functional test will begin (code in all regions specfied in .taskcat.yml)
-
-#### Licensing
-- When adding new dependencies, contributors should verify that any third-party packages or libraries they add have a compatible license. We also encourage contributors to run the dependency scanning script `dependency-licenses.sh` to check Go and Python dependencies for proper licensing.
-
-If these tests pass the PR will be merged to main and synced to S3
+When all Check have PR Check have PASSED and functional test will begin (code in all regions specfied in .taskcat.yml). If these tests pass the PR will be merged to main and synced to S3
 
 For more information, see the [Contributor's & Builder's Guide for CloudFormation-based AWS Partner Solutions](https://aws-quickstart.github.io/option2.html)
 
