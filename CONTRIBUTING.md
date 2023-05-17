@@ -102,6 +102,3 @@ reported the issue. Please try to include as much information as you can. Detail
 * The version of our code being used
 * Any modifications you've made relevant to the bug
 * Anything unusual about your environment or deployment
-
-## Security Issue Notifications
-If you discover a potential security issue in this project we ask that you notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/). Please do **not** create a public GitHub issue.
