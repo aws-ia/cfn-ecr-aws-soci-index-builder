@@ -12,10 +12,10 @@ Parameters:
       to the "dev" repository. Use "*:*" to match all images pushed to all
       repositories in your private registry. This stack builds a SOCI index for
       any images that are pushed to your private registry after this stack is
-      created and match at least one filter.
+      created and match at least one filter. Empty values are NOT accepted.
     Type: CommaDelimitedList
-    Default: ''
-    AllowedPattern: '(^$|(?:[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*\/)*[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*(:?[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*)*)'
+    Default: '*:*'
+    AllowedPattern: '^(?:[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*\/)*[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*(?::[a-z0-9\*]+(?:[._-][a-z0-9\*]+)*)$'
   QSS3BucketName: 
     AllowedPattern: ^[0-9a-z]+([0-9a-z-\.]*[0-9a-z])*$
     ConstraintDescription: >-
@@ -64,11 +64,10 @@ Metadata:
         default: Partner Solution S3 bucket name
       QSS3KeyPrefix:
         default: Partner Solution S3 key prefix
-        
+
 Conditions:
   UsingDefaultBucket: 
     !Equals [!Ref QSS3BucketName, "aws-quickstart"]
-
 
 Resources:
   ECRImageActionEventFilteringLambda:
@@ -208,6 +207,76 @@ Resources:
       Roles:
         - Ref: "SociIndexGeneratorLambdaRole"
 
+  RepositoryNameParsingLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "sts:AssumeRole"
+            Principal:
+              Service: "lambda.amazonaws.com"
+
+  RepositoryNameParsingLambda:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: RepositoryNameParsingLambda
+      Handler: index.handler
+      Runtime: python3.9
+      Role: !GetAtt RepositoryNameParsingLambdaRole.Arn
+      Code:
+        ZipFile: !Sub |
+          import json
+          import cfnresponse
+
+          def handler(event, context):
+            filters = event['ResourceProperties']['filters']
+            REPO_PREFIX = 'arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/'
+            repository_arns = []
+            response = {}
+
+            try:
+              repositories = [filter.split(':')[0] for filter in filters]
+              for repository in repositories:
+                if repository == '*':
+                  repository_arns = [REPO_PREFIX + '*']
+                  break
+
+                repository_arns.append(REPO_PREFIX + repository)
+
+              response['repository_arns'] = repository_arns
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
+            except Exception:
+              cfnresponse.send(event, context, cfnresponse.FAILED, response)
+
+  InvokeRepositoryNameParsingLambda:
+    DependsOn: RepositoryNameParsingLambda
+    Type: Custom::MyCustomResource
+    Properties:
+      ServiceToken: !GetAtt RepositoryNameParsingLambda.Arn
+      filters: !Ref SociRepositoryImageTagFilters
+
+  SociIndexGeneratorLambdaECRRepositoryPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: SociIndexGeneratorLambdaECRRepositoryPolicy
+      PolicyDocument:
+             Version: "2012-10-17"
+             Statement:
+               - Effect: "Allow"
+                 Action:
+                   - "ecr:BatchGetImage"
+                   - "ecr:GetDownloadUrlForLayer"
+                   - "ecr:CompleteLayerUpload"
+                   - "ecr:UploadLayerPart"
+                   - "ecr:InitiateLayerUpload"
+                   - "ecr:BatchCheckLayerAvailability"
+                   - "ecr:PutImage"
+                 Resource: !GetAtt InvokeRepositoryNameParsingLambda.repository_arns
+      Roles:
+        - Ref: "SociIndexGeneratorLambdaRole"
+
   SociIndexGeneratorLambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -228,20 +297,6 @@ Resources:
                    "ecr:GetAuthorizationToken"
                  ]
                  Resource: "*"
-        -  PolicyName: "AllowEcrPushAndPull"
-           PolicyDocument:
-             Version: "2012-10-17"
-             Statement:
-               - Effect: "Allow"
-                 Action:
-                   - "ecr:BatchGetImage"
-                   - "ecr:GetDownloadUrlForLayer"
-                   - "ecr:CompleteLayerUpload"
-                   - "ecr:UploadLayerPart"
-                   - "ecr:InitiateLayerUpload"
-                   - "ecr:BatchCheckLayerAvailability"
-                   - "ecr:PutImage"
-                 Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/*
 
 Outputs:
   ExportsStackName:
