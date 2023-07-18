@@ -43,6 +43,15 @@ Parameters:
       the template. Changing the prefix updates code references to point to 
       a new location.
     Type: String
+  IamPermissionsBoundaryArn:
+    Type: String
+    Description: >-
+      IAM Roles might require an IAM Permissions boundary in order to be created and
+      perform subsequent API calls to services, IAM itself included.
+      This parameter expect the ARN of an IAM policy, or to be set to none.
+      If set to None, the PermissionsBoundary property is omitted on IAM Role creation.
+    Default: none
+    AllowedPattern: none|^arn:aws(?:):iam::[\d]{12}:policy/[0-9a-zA-Z!-_\.\*'\(\)/]+$
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -57,6 +66,11 @@ Metadata:
           - QSS3BucketName
           - QSS3KeyPrefix
 
+      - Label:
+          default: AWS IAM Settings
+        Parameters:
+          - IamPermissionsBoundaryArn
+
     ParameterLabels:
       SociRepositoryImageTagFilters:
         default: SOCI repository image tag filters
@@ -64,10 +78,14 @@ Metadata:
         default: Partner Solution S3 bucket name
       QSS3KeyPrefix:
         default: Partner Solution S3 key prefix
+      IamPermissionsBoundaryArn:
+        default: IAM Permissions Boundary (optional, default none)
+
 
 Conditions:
   UsingDefaultBucket: 
     !Equals [!Ref QSS3BucketName, "aws-quickstart"]
+  UsePermissionsBoundary: !Not [!Equals [!Ref IamPermissionsBoundaryArn, "none"]]
 
 Resources:
   ECRImageActionEventFilteringLambda:
@@ -98,6 +116,11 @@ Resources:
   ECRImageActionEventFilteringLambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      PermissionsBoundary:
+        Fn::If:
+          - UsePermissionsBoundary
+          - !Ref IamPermissionsBoundaryArn
+          - !Ref "AWS::NoValue"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -210,6 +233,11 @@ Resources:
   RepositoryNameParsingLambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      PermissionsBoundary:
+        Fn::If:
+          - UsePermissionsBoundary
+          - !Ref IamPermissionsBoundaryArn
+          - !Ref "AWS::NoValue"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -280,6 +308,11 @@ Resources:
   SociIndexGeneratorLambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      PermissionsBoundary:
+        Fn::If:
+          - UsePermissionsBoundary
+          - !Ref IamPermissionsBoundaryArn
+          - !Ref "AWS::NoValue"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
