@@ -104,7 +104,7 @@ Resources:
           - Effect: "Allow"
             Action: "sts:AssumeRole"
             Principal:
-              Service: "lambda.amazonaws.com"
+              Service: !Sub "lambda.${AWS::URLSuffix}"
 
   ECRImageActionEventFilteringLambdaCloudwatchPolicy:
     Type: AWS::IAM::Policy
@@ -164,7 +164,7 @@ Resources:
     Properties:
       Action: "lambda:InvokeFunction"
       FunctionName: !Ref ECRImageActionEventFilteringLambda
-      Principal: "events.amazonaws.com"
+      Principal: !Sub "events.${AWS::URLSuffix}"
       SourceArn: !GetAtt ECRImageActionEventBridgeRule.Arn
 
   SociIndexGeneratorLambda:
@@ -216,7 +216,7 @@ Resources:
           - Effect: "Allow"
             Action: "sts:AssumeRole"
             Principal:
-              Service: "lambda.amazonaws.com"
+              Service: !Sub "lambda.${AWS::URLSuffix}"
 
   RepositoryNameParsingLambda:
     Type: "AWS::Lambda::Function"
@@ -286,7 +286,7 @@ Resources:
           - Effect: "Allow"
             Action: "sts:AssumeRole"
             Principal:
-              Service: "lambda.amazonaws.com"
+              Service: !Sub "lambda.${AWS::URLSuffix}"
       Policies:
         -  PolicyName: "AllowEcrGetAuthorizationToken"
            PolicyDocument:
