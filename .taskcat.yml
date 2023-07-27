@@ -31,6 +31,8 @@ project:
   - af-south-1
   - us-gov-west-1
   - us-gov-east-1
+  - cn-north-1
+  - cn-northwest-1
 tests:
   can-deploy:
     parameters:
@@ -59,4 +61,6 @@ tests:
       - af-south-1
       - us-gov-west-1
       - us-gov-east-1
+      - cn-north-1
+      - cn-northwest-1
     template: templates/SociIndexBuilder.yml
