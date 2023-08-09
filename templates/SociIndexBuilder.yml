@@ -51,7 +51,7 @@ Parameters:
       This parameter expects the ARN of an IAM policy, or to be set to none.
       If set to None, the PermissionsBoundary property is omitted on IAM Role creation.
     Default: none
-    AllowedPattern: none|^arn:aws(?:):iam::[\d]{12}:policy/[0-9a-zA-Z!-_\.\*'\(\)/]+$
+    AllowedPattern: none|^arn:(?:aws|aws-(?:us-gov|cn)):iam::[\d]{12}:policy/[0-9a-zA-Z!-_\.\*'\(\)/]+$
 
 Metadata:
   AWS::CloudFormation::Interface:
