@@ -173,7 +173,7 @@ Resources:
       Description: >
         Given an Amazon ECR container repository and image, Lambda generates image SOCI artifacts and pushes to repository.
       Handler: main
-      Runtime: go1.x
+      Runtime: provided.al2
       Role: !GetAtt SociIndexGeneratorLambdaRole.Arn
       Timeout: 900
       Code:
