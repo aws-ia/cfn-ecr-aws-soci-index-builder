@@ -1,4 +1,4 @@
-FROM golang:1.19
+FROM golang:1.20
 
 RUN apt-get -y update
 RUN apt-get -y install python3-pip make git zip gcc g++ zlib1g zlib1g-dev
