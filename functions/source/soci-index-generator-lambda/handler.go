@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"errors"
+	"path"
+
 	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/events"
 	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/fs"
 	"github.com/aws-ia/cfn-aws-soci-index-builder/soci-index-generator-lambda/utils/log"
@@ -21,9 +23,9 @@ import (
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/containerd/containerd/images"
 	"oras.land/oras-go/v2/content/oci"
-	"path"
 
 	"github.com/awslabs/soci-snapshotter/soci"
+	"github.com/awslabs/soci-snapshotter/soci/store"
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/content/local"
 	"github.com/containerd/containerd/platforms"
@@ -72,12 +74,12 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 
 	setDeadline(ctx, quitChannel, dataDir)
 
-	ociStore, err := initOciStore(ctx, dataDir)
+	sociStore, err := initSociStore(ctx, dataDir)
 	if err != nil {
 		return lambdaError(ctx, "OCI storage initialization error", err)
 	}
 
-	desc, err := registry.Pull(ctx, repo, ociStore, digest)
+	desc, err := registry.Pull(ctx, repo, sociStore, digest)
 	if err != nil {
 		return lambdaError(ctx, "Image pull error", err)
 	}
@@ -87,13 +89,13 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 		Target: *desc,
 	}
 
-	indexDescriptor, err := buildIndex(ctx, dataDir, ociStore, image)
+	indexDescriptor, err := buildIndex(ctx, dataDir, sociStore, image)
 	if err != nil {
 		return lambdaError(ctx, "SOCI index build error", err)
 	}
 	ctx = context.WithValue(ctx, "SOCIIndexDigest", indexDescriptor.Digest.String())
 
-	err = registry.Push(ctx, ociStore, *indexDescriptor, repo)
+	err = registry.Push(ctx, sociStore, *indexDescriptor, repo)
 	if err != nil {
 		return lambdaError(ctx, "SOCI index push error", err)
 	}
@@ -240,9 +242,13 @@ func initContainerdStore(dataDir string) (content.Store, error) {
 	return containerdStore, err
 }
 
-// Init OCI artifact store
-func initOciStore(ctx context.Context, dataDir string) (*oci.Store, error) {
-	return oci.NewWithContext(ctx, path.Join(dataDir, artifactsStoreName))
+// Init SOCI artifact store
+func initSociStore(ctx context.Context, dataDir string) (*store.SociStore, error) {
+	// Note: We are wrapping an *oci.Store in a store.SociStore because soci.WriteSociIndex
+	// expects a store.Store, an interface that extends the oci.Store to provide support
+	// for garbage collection.
+	ociStore, err := oci.NewWithContext(ctx, path.Join(dataDir, artifactsStoreName))
+	return &store.SociStore{ociStore}, err
 }
 
 // Init a new instance of SOCI artifacts DB
@@ -256,7 +262,7 @@ func initSociArtifactsDb(dataDir string) (*soci.ArtifactsDb, error) {
 }
 
 // Build soci index for an image and returns its ocispec.Descriptor
-func buildIndex(ctx context.Context, dataDir string, ociStore *oci.Store, image images.Image) (*ocispec.Descriptor, error) {
+func buildIndex(ctx context.Context, dataDir string, sociStore *store.SociStore, image images.Image) (*ocispec.Descriptor, error) {
 	log.Info(ctx, "Building SOCI index")
 	platform := platforms.DefaultSpec() // TODO: make this a user option
 
@@ -270,7 +276,7 @@ func buildIndex(ctx context.Context, dataDir string, ociStore *oci.Store, image 
 		return nil, err
 	}
 
-	builder, err := soci.NewIndexBuilder(containerdStore, ociStore, artifactsDb, soci.WithMinLayerSize(0), soci.WithPlatform(platform))
+	builder, err := soci.NewIndexBuilder(containerdStore, sociStore, artifactsDb, soci.WithMinLayerSize(0), soci.WithPlatform(platform))
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +288,7 @@ func buildIndex(ctx context.Context, dataDir string, ociStore *oci.Store, image 
 	}
 
 	// Write the SOCI index to the OCI store
-	err = soci.WriteSociIndex(ctx, index, ociStore, artifactsDb)
+	err = soci.WriteSociIndex(ctx, index, sociStore, artifactsDb)
 	if err != nil {
 		return nil, err
 	}
