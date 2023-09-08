@@ -33,8 +33,20 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-const artifactsStoreName = "store"
-const artifactsDbName = "artifacts.db"
+// TODO: Remove this once the SOCI library exports this error.
+var (
+	ErrEmptyIndex = errors.New("no ztocs created, all layers either skipped or produced errors")
+)
+
+const (
+	BuildFailedMessage          = "SOCI index build error"
+	PushFailedMessage           = "SOCI index push error"
+	SkipPushOnEmptyIndexMessage = "Skipping pushing SOCI index as it does not contain any zTOCs"
+	BuildAndPushSuccessMessage  = "Successfully built and pushed SOCI index"
+
+	artifactsStoreName = "store"
+	artifactsDbName    = "artifacts.db"
+)
 
 func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (string, error) {
 	ctx, err := validateEvent(ctx, event)
@@ -91,17 +103,21 @@ func HandleRequest(ctx context.Context, event events.ECRImageActionEvent) (strin
 
 	indexDescriptor, err := buildIndex(ctx, dataDir, sociStore, image)
 	if err != nil {
-		return lambdaError(ctx, "SOCI index build error", err)
+		if err.Error() == ErrEmptyIndex.Error() {
+			log.Warn(ctx, SkipPushOnEmptyIndexMessage)
+			return SkipPushOnEmptyIndexMessage, nil
+		}
+		return lambdaError(ctx, BuildFailedMessage, err)
 	}
 	ctx = context.WithValue(ctx, "SOCIIndexDigest", indexDescriptor.Digest.String())
 
 	err = registry.Push(ctx, sociStore, *indexDescriptor, repo)
 	if err != nil {
-		return lambdaError(ctx, "SOCI index push error", err)
+		return lambdaError(ctx, PushFailedMessage, err)
 	}
 
-	log.Info(ctx, "Successfully built and pushed SOCI index")
-	return "Successfully built and pushed SOCI index", nil
+	log.Info(ctx, BuildAndPushSuccessMessage)
+	return BuildAndPushSuccessMessage, nil
 }
 
 // Validate the given event, populating the context with relevant valid event properties
@@ -276,7 +292,7 @@ func buildIndex(ctx context.Context, dataDir string, sociStore *store.SociStore,
 		return nil, err
 	}
 
-	builder, err := soci.NewIndexBuilder(containerdStore, sociStore, artifactsDb, soci.WithMinLayerSize(0), soci.WithPlatform(platform))
+	builder, err := soci.NewIndexBuilder(containerdStore, sociStore, artifactsDb, soci.WithPlatform(platform))
 	if err != nil {
 		return nil, err
 	}
