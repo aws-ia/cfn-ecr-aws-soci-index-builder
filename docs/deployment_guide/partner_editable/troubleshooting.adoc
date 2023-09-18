@@ -5,6 +5,8 @@ Lambda logs for generating SOCI Index artifacts can be found in the CloudWatch l
 
 If Lambda logs for generating SOCI Index artifacts show that the Lambda function is timing out (example: You notice _Task timed out_ in the log entry), this is likely caused by the size of the image. SOCI Index Builder supports a maximum compressed image size of 6GB because larger sizes may result in the SOCI Index Builder Lambda timing out after 15 minutes.
 
+_Note: A SOCI index will not be generated for an image if every layer in the image is under 10 MiB in size. We recommend that you try lazy loading with container images greater than 250 MiB in size when compressed. You are less likely to see a reduction in the time to start smaller images._
+
 == Resources
 
 AWS Services:
