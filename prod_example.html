@@ -1227,6 +1227,9 @@ Unless you&#8217;re customizing the Partner Solution templates or are instructed
 <div class="paragraph">
 <p>If Lambda logs for generating SOCI Index artifacts show that the Lambda function is timing out (example: You notice <em>Task timed out</em> in the log entry), this is likely caused by the size of the image. SOCI Index Builder supports a maximum compressed image size of 6GB because larger sizes may result in the SOCI Index Builder Lambda timing out after 15 minutes.</p>
 </div>
+<div class="paragraph">
+<p><em>Note: A SOCI index will not be generated for an image if every layer in the image is under 10 MiB in size. We recommend that you try lazy loading with container images greater than 250 MiB in size when compressed. You are less likely to see a reduction in the time to start smaller images.</em></p>
+</div>
 </div>
 </div>
 <div class="sect1">
