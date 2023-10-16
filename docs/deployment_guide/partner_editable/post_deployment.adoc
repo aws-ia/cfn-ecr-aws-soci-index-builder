@@ -2,8 +2,8 @@
 
 // == Postdeployment steps
 
-== Tear Down
+== Cleanup
 
-1. To remove this solution, delete the CloudFormation stack created in the *Deployment steps* section above.
-2. In the CloudWatch Logs console, delete CloudWatch Logs log groups `/aws/lambda/<StackName>-SociIndexGeneratorLambda` and `/aws/lambda/<StackName>-ECRImageActionEventFilteringLambda` where `<StackName>` is the name of the stack that you entered in the *Deployment steps* section above. You can also use the https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DeleteLogGroup.html[DeleteLogGroup^] API to delete the log groups.
-3. In the Amazon ECR console, delete the SOCI Index artifacts uploaded to Amazon ECR. You can also use the https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_BatchDeleteImage.html[BatchDeleteImage^] API to delete the artifacts.
+1. To remove this solution, delete the Amazon CloudFormation stack created in the *Deployment steps* section.
+2. In the Amazon CloudWatch Logs console, delete the log groups `/aws/lambda/<StackName>-SociIndexGeneratorLambda` and `/aws/lambda/<StackName>-ECRImageActionEventFilteringLambda` where `<StackName>` is the name of the stack that you entered in the *Deployment steps* section. You can also use the https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DeleteLogGroup.html[DeleteLogGroup^] API to delete the log groups.
+3. In the Amazon ECR console, delete the SOCI index artifacts. You can also use the https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_BatchDeleteImage.html[BatchDeleteImage^] API to delete the artifacts.
