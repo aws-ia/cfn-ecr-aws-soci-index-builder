@@ -1,1 +1,1 @@
-This guide covers information you need to deploy the https://aws.amazon.com/about-aws/whats-new/2022/09/introducing-seekable-oci-lazy-loading-container-images/[Seekable OCI (SOCI)^] Index Builder on the AWS Cloud.
+This guide covers information you need to deploy the https://aws.amazon.com/about-aws/whats-new/2022/09/introducing-seekable-oci-lazy-loading-container-images[Seekable OCI (SOCI)^] Index Builder to the AWS Cloud.

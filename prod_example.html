@@ -860,7 +860,7 @@ p.footer-text a{color:#d7d8d8}
 <li><a href="#_deployment_options">Deployment options</a></li>
 <li><a href="#_predeployment_steps">Predeployment steps</a></li>
 <li><a href="#_deployment_steps">Deployment steps</a></li>
-<li><a href="#_tear_down">Tear Down</a></li>
+<li><a href="#_cleanup">Cleanup</a></li>
 <li><a href="#_troubleshooting">Troubleshooting</a></li>
 <li><a href="#_resources">Resources</a></li>
 <li><a href="#_customer_responsibility">Customer responsibility</a></li>
@@ -881,8 +881,8 @@ p.footer-text a{color:#d7d8d8}
 </div>
 <div class="paragraph text-center">
 <p><strong>March 2023</strong><br>
-<em>Amazon Elastic Container Registry (ECR) team</em><br>
-<em>Dylan Owen, Tony Bulding, AWS Integration &amp; Automation team</em><br></p>
+<em>Amazon Elastic Container Registry team</em><br>
+<em>Dylan Owen and Tony Bulding, AWS Integration &amp; Automation team</em><br></p>
 </div>
 <div class="imageblock text-left image-container">
 <div class="content">
@@ -902,7 +902,7 @@ Refer to the <a href="https://github.com/aws-ia/cfn-ecr-aws-soci-index-builder" 
 </table>
 </div>
 <div class="paragraph text-left">
-<p>This Partner Solution was created by Amazon.com, Inc. in collaboration with Amazon Web Services (AWS). <a href="https://aws.amazon.com/solutions/partners/" target="_blank" rel="noopener">Partner Solutions</a> are automated reference deployments that help people deploy popular technologies on AWS according to AWS best practices. If you&#8217;re unfamiliar with AWS Partner Solutions, refer to the <a href="https://fwd.aws/rA69w?" target="_blank" rel="noopener">AWS Partner Solution General Information Guide</a>.</p>
+<p>This Partner Solution was created by Amazon in collaboration with Amazon Web Services (AWS). <a href="https://aws.amazon.com/solutions/partners/" target="_blank" rel="noopener">Partner Solutions</a> are automated reference deployments that help people deploy popular technologies on AWS according to AWS best practices. If you&#8217;re unfamiliar with AWS Partner Solutions, refer to the <a href="https://fwd.aws/rA69w?" target="_blank" rel="noopener">AWS Partner Solution General Information Guide</a>.</p>
 </div>
 </div>
 </div>
@@ -910,7 +910,7 @@ Refer to the <a href="https://github.com/aws-ia/cfn-ecr-aws-soci-index-builder" 
 <h2 id="_overview">Overview</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This guide covers information you need to deploy the <a href="https://aws.amazon.com/about-aws/whats-new/2022/09/introducing-seekable-oci-lazy-loading-container-images/" target="_blank" rel="noopener">Seekable OCI (SOCI)</a> Index Builder on the AWS Cloud.</p>
+<p>This guide covers information you need to deploy the <a href="https://aws.amazon.com/about-aws/whats-new/2022/09/introducing-seekable-oci-lazy-loading-container-images" target="_blank" rel="noopener">Seekable OCI (SOCI)</a> Index Builder to the AWS Cloud.</p>
 </div>
 </div>
 </div>
@@ -918,7 +918,7 @@ Refer to the <a href="https://github.com/aws-ia/cfn-ecr-aws-soci-index-builder" 
 <h2 id="_costs_and_licenses">Costs and licenses</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>There is no cost to use this solution, but you will be billed for any AWS services or resources that this solution deploys. For more information, refer to the <a href="https://fwd.aws/rA69w?" target="_blank" rel="noopener">AWS Partner Solution General Information Guide</a>.</p>
+<p>There is no cost to use this solution, but you will be billed for any AWS services or resources that this solution deploys. For more information, refer to the <a href="https://fwd.aws/rA69w?" target="_blank" rel="noopener">AWS Quick Starts General Information Guide</a>.</p>
 </div>
 </div>
 </div>
@@ -958,7 +958,7 @@ AWS Cloud.</p>
 <p>Filter Amazon ECR image action events that match the filters provided in the CloudFormation stack parameters.</p>
 </li>
 <li>
-<p>Generate SOCI indices for matching images and push  indices back to images repositories in the Amazon ECR registry.</p>
+<p>Generate SOCI indices for matching images and push indices back to image repositories in the Amazon ECR registry.</p>
 </li>
 </ul>
 </div>
@@ -971,10 +971,10 @@ AWS Cloud.</p>
 <p>EventBridge to invoke the filtering Lambda function.</p>
 </li>
 <li>
-<p>Filtering Lambda function to create Amazon CloudWatch logs and to invoke the SOCI Index Generator Lambda function.</p>
+<p>Filtering Lambda function to create Amazon CloudWatch logs and to invoke the SOCI index generator Lambda function.</p>
 </li>
 <li>
-<p>SOCI Index Generator Lambda function to create CloudWatch logs and access the Amazon ECR registry.</p>
+<p>SOCI index generator Lambda function to create CloudWatch logs and access the Amazon ECR registry.</p>
 </li>
 </ul>
 </div>
@@ -993,19 +993,19 @@ AWS Cloud.</p>
 <h2 id="_deployment_options">Deployment options</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This solution provides the following deployment option:</p>
+<p>This solution provides the following deployment options:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://fwd.aws/wNB78?" target="_blank" rel="noopener">Deploy SOCI Index Builder</a>. This option builds a new workflow consisting of an EventBridge rule, filtering Lambda function, SOCI Index generator Lambda function, and IAM resources.</p>
+<p><a href="https://fwd.aws/wNB78?" target="_blank" rel="noopener">Deploy SOCI Index Builder</a>. This builds a new workflow consisting of an Amazon EventBridge rule, filtering Lambda function, SOCI index generator Lambda function, and IAM resources.</p>
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://console.amazonaws-us-gov.com/cloudformation/home?region=us-gov-west-1#/stacks/create?stackName=cfn-ecr-aws-soci-index-builder&amp;templateURL=https://aws-quickstart-us-gov-west-1.s3.us-gov-west-1.amazonaws.com/cfn-ecr-aws-soci-index-builder/templates/SociIndexBuilder.yml" target="_blank" rel="noopener">Deploy SOCI Index Builder in Govcloud</a></p>
+<p><a href="https://console.amazonaws-us-gov.com/cloudformation/home?region=us-gov-west-1#/stacks/create?stackName=cfn-ecr-aws-soci-index-builder&amp;templateURL=https://aws-quickstart-us-gov-west-1.s3.us-gov-west-1.amazonaws.com/cfn-ecr-aws-soci-index-builder/templates/SociIndexBuilder.yml" target="_blank" rel="noopener">Deploy SOCI Index Builder to GovCloud (US)</a></p>
 </li>
 <li>
-<p><a href="https://console.amazonaws.cn/cloudformation/home?region=cn-north-1#/stacks/create?stackName=cfn-ecr-aws-soci-index-builder&amp;templateURL=https://aws-quickstart-cn-north-1.s3.cn-north-1.amazonaws.com.cn/cfn-ecr-aws-soci-index-builder/templates/SociIndexBuilder.yml" target="_blank" rel="noopener">Deploy SOCI Index Builder in China</a></p>
+<p><a href="https://console.amazonaws.cn/cloudformation/home?region=cn-north-1#/stacks/create?stackName=cfn-ecr-aws-soci-index-builder&amp;templateURL=https://aws-quickstart-cn-north-1.s3.cn-north-1.amazonaws.com.cn/cfn-ecr-aws-soci-index-builder/templates/SociIndexBuilder.yml" target="_blank" rel="noopener">Deploy SOCI Index Builder to China (Beijing)</a></p>
 </li>
 </ul>
 </div>
@@ -1023,11 +1023,11 @@ AWS Cloud.</p>
 <p>Create an Amazon ECR repository to store container images and generated SOCI artifacts.</p>
 </li>
 <li>
-<p>Sign in to the CloudFormation console or call the CloudFormation CreateStack API with credentials that have permissions to create, update, rollback, or delete a stack. For more information, refer to <a href="https://docs.amazonaws.cn/en_us/AWSCloudFormation/latest/UserGuide/using-iam-template.html" target="_blank" rel="noopener">Controlling access with Amazon Identity and Access Management</a>. This IAM role or user must also have permissions to perform at least the following actions so CloudFormation can create, modify, and delete the resources in the stack:</p>
+<p>Sign in to the AWS CloudFormation console or call the CloudFormation <code>CreateStack</code> API using IAM credentials that have permissions to create, update, rollback, and delete a stack. Minimally, the IAM role must have permissions to create, modify, and delete stack resources. For more information, refer to <a href="https://docs.amazonaws.cn/en_us/AWSCloudFormation/latest/UserGuide/using-iam-template.html" target="_blank" rel="noopener">Controlling access with Amazon Identity and Access Management</a>.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Eventbridge permissions</p>
+<p>Amazon EventBridge permissions</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-json" data-lang="json">{
@@ -1042,7 +1042,7 @@ AWS Cloud.</p>
                 "events:DeleteRule",
                 "events:RemoveTargets"
             ],
-            "Resource": "arn:aws:events:&lt;Region&gt;:&lt;AccountId&gt;:rule/ECRImageActionEventBridgeRule",
+            "Resource": "arn:aws:events:&lt;Region&gt;:&lt;AccountId&gt;:rule/ECRImageActionEventBridgeRule"
         }
     ]
 }</code></pre>
@@ -1050,7 +1050,7 @@ AWS Cloud.</p>
 </div>
 </li>
 <li>
-<p>S3 permissions (to fetch Lambda code)</p>
+<p>Amazon S3 permissions (to fetch Lambda code)</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-json" data-lang="json">{
@@ -1063,7 +1063,7 @@ AWS Cloud.</p>
             ],
             "Resource": [
                 "arn:aws:s3:::aws-quickstart-&lt;Region&gt;/*soci_index_generator_lambda.zip",
-                "arn:aws:s3:::aws-quickstart-&lt;Region&gt;/*ecr_image_action_event_filtering_lambda_function.zip"
+                "arn:aws:s3:::aws-quickstart-&lt;Region&gt;/*ecr-image-action-event-filtering/lambda.zip"
             ]
         }
     ]
@@ -1086,11 +1086,13 @@ AWS Cloud.</p>
                 "lambda:UpdateFunctionConfiguration",
                 "lambda:AddPermission",
                 "lambda:DeleteFunction",
-                "lambda:RemovePermission"
+                "lambda:RemovePermission",
+                "lambda:InvokeFunction"
             ],
             "Resource": [
                 "arn:aws:lambda:&lt;Region&gt;:&lt;AccountId&gt;:function:*-ECRImageActionEventFilteringLambda-*",
-                "arn:aws:lambda:&lt;Region&gt;:&lt;AccountId&gt;:function:*-SociIndexGeneratorLambda-*"
+                "arn:aws:lambda:&lt;Region&gt;:&lt;AccountId&gt;:function:*-SociIndexGeneratorLambda-*",
+                "arn:aws:lambda:&lt;Region&gt;:&lt;AccountId&gt;:function:RepositoryNameParsingLambda"
             ]
         }
     ]
@@ -1117,8 +1119,9 @@ AWS Cloud.</p>
                 "iam:DeleteRolePolicy"
             ],
             "Resource": [
-                "arn:aws:iam::&lt;AccountId&gt;:role/*-ECRImageActionEventFilteringLambdaRole*",
-                "arn:aws:iam::&lt;AccountId&gt;:role/*-SociIndexGeneratorLambdaRole*"
+                "arn:aws:iam::&lt;AccountId&gt;:role/*-ECRImageActionEventFilteringLambdaRole-*",
+                "arn:aws:iam::&lt;AccountId&gt;:role/*-SociIndexGeneratorLambdaRole-*",
+                "arn:aws:iam::&lt;AccountId&gt;:role/*-RepositoryNameParsingLambdaRole-*"
             ]
         }
     ]
@@ -1137,13 +1140,19 @@ AWS Cloud.</p>
 <div class="ulist">
 <ul>
 <li>
-<p><code>&lt;AccountId&gt;</code> should be replaced by the AWS Account ID of the account you’re deploying to and <code>&lt;Region&gt;</code> should be replaced by the region you’re deploying to (example: us-east-1).</p>
+<p>Replace <code>&lt;AccountId&gt;</code> with the AWS account ID from the account you deploy to, and replace <code>&lt;Region&gt;</code> with the Region you deploy to (for example, <code>us-east-1</code>).</p>
 </li>
 <li>
-<p>The role name <em>ECRImageActionEventFilteringLambdaRole</em>, specified in the resource section of the IAM permissions above, will be truncated if the name of your stack is greater than 12 characters.</p>
+<p>The Lambda function name <code><em>ECRImageActionEventFilteringLambda</em></code>, specified in the <strong>Resources</strong> section, is truncated if your stack name exceeds 15 characters.</p>
 </li>
 <li>
-<p>The role name <em>SociIndexGeneratorLambdaRole</em>, specified in the resource section of the IAM permissions above, will be truncated if the name of your stack is greater than 22 characters.</p>
+<p>The role name <code><em>ECRImageActionEventFilteringLambdaRole</em></code>, specified in the <strong>Resources</strong> section, is truncated if your stack name exceeds 11 characters.</p>
+</li>
+<li>
+<p>The role name <code><em>SociIndexGeneratorLambdaRole</em></code>, specified in the <strong>Resources</strong> section, is truncated if your stack name exceeds 21 characters.</p>
+</li>
+<li>
+<p>The role name <code><em>RepositoryNameParsingLambdaRole</em></code>, specified in the <strong>Resources</strong> section, is truncated if your stack name exceeds 18 characters.</p>
 </li>
 </ul>
 </div>
@@ -1198,18 +1207,18 @@ Unless you&#8217;re customizing the Partner Solution templates or are instructed
 </div>
 </div>
 <div class="sect1">
-<h2 id="_tear_down">Tear Down</h2>
+<h2 id="_cleanup">Cleanup</h2>
 <div class="sectionbody">
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>To remove this solution, delete the CloudFormation stack created in the <strong>Deployment steps</strong> section above.</p>
+<p>To remove this solution, delete the Amazon CloudFormation stack created in the <strong>Deployment steps</strong> section.</p>
 </li>
 <li>
-<p>In the CloudWatch Logs console, delete CloudWatch Logs log groups <code>/aws/lambda/&lt;StackName&gt;-SociIndexGeneratorLambda</code> and <code>/aws/lambda/&lt;StackName&gt;-ECRImageActionEventFilteringLambda</code> where <code>&lt;StackName&gt;</code> is the name of the stack that you entered in the <strong>Deployment steps</strong> section above. You can also use the <a href="https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DeleteLogGroup.html" target="_blank" rel="noopener">DeleteLogGroup</a> API to delete the log groups.</p>
+<p>In the Amazon CloudWatch Logs console, delete the log groups <code>/aws/lambda/&lt;StackName&gt;-SociIndexGeneratorLambda</code> and <code>/aws/lambda/&lt;StackName&gt;-ECRImageActionEventFilteringLambda</code> where <code>&lt;StackName&gt;</code> is the name of the stack that you entered in the <strong>Deployment steps</strong> section. You can also use the <a href="https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DeleteLogGroup.html" target="_blank" rel="noopener">DeleteLogGroup</a> API to delete the log groups.</p>
 </li>
 <li>
-<p>In the Amazon ECR console, delete the SOCI Index artifacts uploaded to Amazon ECR. You can also use the <a href="https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_BatchDeleteImage.html" target="_blank" rel="noopener">BatchDeleteImage</a> API to delete the artifacts.</p>
+<p>In the Amazon ECR console, delete the SOCI index artifacts. You can also use the <a href="https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_BatchDeleteImage.html" target="_blank" rel="noopener">BatchDeleteImage</a> API to delete the artifacts.</p>
 </li>
 </ol>
 </div>
@@ -1219,25 +1228,31 @@ Unless you&#8217;re customizing the Partner Solution templates or are instructed
 <h2 id="_troubleshooting">Troubleshooting</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>For troubleshooting common AWS Partner Solution issues, refer to the <a href="https://fwd.aws/rA69w?">AWS Quick Start General Information Guide</a> and <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/troubleshooting.html">Troubleshooting CloudFormation</a>.</p>
+<p>For troubleshooting common issues, refer to <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/troubleshooting.html">Troubleshooting CloudFormation</a> and the <a href="https://fwd.aws/rA69w?">AWS Quick Start General Information Guide</a>.</p>
 </div>
 <div class="paragraph">
-<p>Lambda logs for generating SOCI Index artifacts can be found in the CloudWatch log group <code>/aws/lambda/&lt;StackName&gt;-SociIndexGeneratorLambda</code>. Lambda logs for repository image tag filtering and matches can be found in the CloudWatch log group <code>/aws/lambda/&lt;StackName&gt;-ECRImageActionEventFilteringLambda</code> where <code>&lt;StackName&gt;</code> is the name of the stack that you entered in the <strong>Deployment steps</strong> section above.</p>
+<p>Lambda logs for generating SOCI index artifacts can be found in the CloudWatch log group <code>/aws/lambda/&lt;StackName&gt;-SociIndexGeneratorLambda</code>. Lambda logs for repository image tag filtering and matches can be found in the CloudWatch log group <code>/aws/lambda/&lt;StackName&gt;-ECRImageActionEventFilteringLambda</code>, where <code>&lt;StackName&gt;</code> is the name of the stack that you entered in the <strong>Deployment steps</strong> section.</p>
 </div>
 <div class="paragraph">
-<p>If Lambda logs for generating SOCI Index artifacts show that the Lambda function is timing out (example: You notice <em>Task timed out</em> in the log entry), this is likely caused by the size of the image. SOCI Index Builder supports a maximum compressed image size of 6GB because larger sizes may result in the SOCI Index Builder Lambda timing out after 15 minutes.</p>
+<p>If Lambda logs for generating SOCI index artifacts show that the Lambda function is timing out (that is, <strong>Task timed out</strong> is in the log), this is likely caused by the image size. SOCI Index Builder supports a maximum compressed image size of 6 GB because larger sizes may force the SOCI index generator Lambda to time out after 15 minutes.</p>
 </div>
-<div class="paragraph">
-<p><em>Note: A SOCI index will not be generated for an image if every layer in the image is under 10 MiB in size. We recommend that you try lazy loading with container images greater than 250 MiB in size when compressed. You are less likely to see a reduction in the time to start smaller images.</em></p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+A SOCI index will not be generated for an image if every layer in the image is under 10 MiB. For container images greater than 250 MiB (compressed), we recommend lazy loading. You are less likely to see a time reduction for smaller images.
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_resources">Resources</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>AWS Services:</p>
-</div>
 <div class="ulist">
 <ul>
 <li>
@@ -1311,7 +1326,7 @@ Unless you&#8217;re customizing the Partner Solution templates or are instructed
         <!-- We can use document attributes: -->
         <!-- Generated with Asciidoctor v2.0.17. -->
         <a href="https://aws.amazon.com/privacy/">Privacy</a> | <a href="https://aws.amazon.com/terms/">Site terms</a> |
-        &copy; 2023, Amazon Web Services, Inc. or its affiliates and Amazon.com, Inc.. All rights reserved.
+        &copy; 2023, Amazon Web Services, Inc. or its affiliates and Amazon. All rights reserved.
     </p>
 </footer>
 </body>
