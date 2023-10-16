@@ -16,9 +16,9 @@ As shown in <<architecture1>>, this solution sets up the following:
 ** An Amazon EventBridge rule to detect Amazon ECR image action events and invoke the filtering AWS Lambda function.
 ** Two AWS Lambda functions to do the following:
 *** Filter Amazon ECR image action events that match the filters provided in the CloudFormation stack parameters.
-*** Generate SOCI indices for matching images and push  indices back to images repositories in the Amazon ECR registry.
+*** Generate SOCI indices for matching images and push indices back to image repositories in the Amazon ECR registry.
 ** AWS Identity and Access Management (IAM) to provide the following permissions:
 *** EventBridge to invoke the filtering Lambda function.
-*** Filtering Lambda function to create Amazon CloudWatch logs and to invoke the SOCI Index Generator Lambda function.
-*** SOCI Index Generator Lambda function to create CloudWatch logs and access the Amazon ECR registry.
+*** Filtering Lambda function to create Amazon CloudWatch logs and to invoke the SOCI index generator Lambda function.
+*** SOCI index generator Lambda function to create CloudWatch logs and access the Amazon ECR registry.
 * CloudWatch to collect logs from both Lambda functions for troubleshooting.

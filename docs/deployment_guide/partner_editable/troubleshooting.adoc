@@ -1,15 +1,13 @@
 // Add any unique troubleshooting steps here.
-For troubleshooting common AWS Partner Solution issues, refer to the https://fwd.aws/rA69w?[AWS Quick Start General Information Guide] and https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/troubleshooting.html[Troubleshooting CloudFormation].
+For troubleshooting common issues, refer to https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/troubleshooting.html[Troubleshooting CloudFormation] and the https://fwd.aws/rA69w?[AWS Quick Start General Information Guide].
 
-Lambda logs for generating SOCI Index artifacts can be found in the CloudWatch log group `/aws/lambda/<StackName>-SociIndexGeneratorLambda`. Lambda logs for repository image tag filtering and matches can be found in the CloudWatch log group `/aws/lambda/<StackName>-ECRImageActionEventFilteringLambda` where `<StackName>` is the name of the stack that you entered in the *Deployment steps* section above.
+Lambda logs for generating SOCI index artifacts can be found in the CloudWatch log group `/aws/lambda/<StackName>-SociIndexGeneratorLambda`. Lambda logs for repository image tag filtering and matches can be found in the CloudWatch log group `/aws/lambda/<StackName>-ECRImageActionEventFilteringLambda`, where `<StackName>` is the name of the stack that you entered in the *Deployment steps* section.
 
-If Lambda logs for generating SOCI Index artifacts show that the Lambda function is timing out (example: You notice _Task timed out_ in the log entry), this is likely caused by the size of the image. SOCI Index Builder supports a maximum compressed image size of 6GB because larger sizes may result in the SOCI Index Builder Lambda timing out after 15 minutes.
+If Lambda logs for generating SOCI index artifacts show that the Lambda function is timing out (that is, **Task timed out** is in the log), this is likely caused by the image size. {partner-product-short-name} supports a maximum compressed image size of 6 GB because larger sizes may force the SOCI index generator Lambda to time out after 15 minutes.
 
-_Note: A SOCI index will not be generated for an image if every layer in the image is under 10 MiB in size. We recommend that you try lazy loading with container images greater than 250 MiB in size when compressed. You are less likely to see a reduction in the time to start smaller images._
+NOTE: A SOCI index will not be generated for an image if every layer in the image is under 10 MiB. For container images greater than 250 MiB (compressed), we recommend lazy loading. You are less likely to see a time reduction for smaller images.
 
 == Resources
-
-AWS Services:
 
 * https://aws.amazon.com/cloudformation/[AWS CloudFormation^]
 * https://aws.amazon.com/eventbridge/[Amazon EventBridge^]
@@ -17,4 +15,3 @@ AWS Services:
 * https://aws.amazon.com/s3/[Amazon S3^]
 * https://aws.amazon.com/ecr/[Amazon ECR^]
 * https://aws.amazon.com/cloudwatch/[Amazon CloudWatch^]
-
