@@ -33,6 +33,7 @@ project:
   - us-gov-east-1
   - cn-north-1
   - cn-northwest-1
+  - me-central-1
 tests:
   can-deploy:
     parameters:
@@ -63,4 +64,5 @@ tests:
       - us-gov-east-1
       - cn-north-1
       - cn-northwest-1
+      - me-central-1
     template: templates/SociIndexBuilder.yml
