@@ -30,6 +30,7 @@ import (
 const (
 	MediaTypeDockerManifestList = "application/vnd.docker.distribution.manifest.list.v2+json"
 	MediaTypeDockerManifest     = "application/vnd.docker.distribution.manifest.v2+json"
+	MediaTypeOCIImageIndex      = "application/vnd.oci.image.index.v1+json"
 	MediaTypeOCIManifest        = "application/vnd.oci.image.manifest.v1+json"
 
 	MediaTypeDockerImageConfig = "application/vnd.docker.container.image.v1+json"

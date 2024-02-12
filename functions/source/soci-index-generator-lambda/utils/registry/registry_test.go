@@ -37,7 +37,7 @@ func TestHeadManifest(t *testing.T) {
 	}
 
 	expected := ExpectedResponse{
-		MediaType: MediaTypeDockerManifestList,
+		MediaType: MediaTypeOCIImageIndex,
 	}
 	doTest("public.ecr.aws", "docker/library/redis", "7", expected)
 
@@ -82,7 +82,7 @@ func TestGetManifest(t *testing.T) {
 	}
 
 	expected := ExpectedResponse{
-		MediaType: MediaTypeDockerManifestList,
+		MediaType: MediaTypeOCIImageIndex,
 		Config: ocispec.Descriptor{
 			MediaType: "",
 		},
